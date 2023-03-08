@@ -1,0 +1,22 @@
+{% load django_bootstrap5  bootstrap_icons static %}
+<nav id="sidebar" class="sidebar">
+    <div class="sidebar-content js-simplebar">
+        <a class="sidebar-brand" href="/">
+            <span class="align-middle">Toolshed</span>
+        </a>
+
+        <ul class="sidebar-nav">
+            <li class="sidebar-header">
+                Tools & Components
+            </li>
+
+            <li class="sidebar-item {% if 'icons' in segment %} active {% endif %}">
+                <a class="sidebar-link" href="{% url 'inventory' %}">
+                    {% bs_icon 'archive' extra_classes="bi-valign-middle" %}
+                    <span class="align-middle">Inventory</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+

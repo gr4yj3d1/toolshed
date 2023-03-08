@@ -1,0 +1,29 @@
+{% load django_bootstrap5  bootstrap_icons static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="shortcut icon" href="/static/assets/img/icons/toolshed-48x48.png"/>
+    <title>
+        {% block title %}{% endblock %} | Toolshed
+    </title>
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'bootstrap_icons/css/bootstrap_icons.css' %}">
+    {% bootstrap_javascript %}
+    <link href="/static/assets/css/toolshed.css" rel="stylesheet">
+    {% block stylesheets %}{% endblock stylesheets %}
+</head>
+<body>
+<div class="wrapper">
+    {% include 'includes/sidebar.html' %}
+    <div class="main">
+        {% include 'includes/navigation.html' %}
+        {% block content %}{% endblock content %}
+        {% include 'includes/footer.html' %}
+    </div>
+</div>
+{% block javascripts %}{% endblock javascripts %}
+</body>
+</html>
