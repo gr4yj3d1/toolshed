@@ -1,16 +1,59 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django_softdelete.models import SoftDeleteModel
 
 
-class InventoryItem(models.Model):
+class InventoryItem(SoftDeleteModel):
+    published = models.BooleanField(default=False)
     name = models.CharField(max_length=255)
     description = models.TextField()
     category = models.CharField(max_length=255)
-    condition = models.CharField(max_length=255)
-    available = models.BooleanField(default=True)
-    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tools')
+    availability_policy = models.CharField(max_length=255)
+    # owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inventory_items')
+    owned_amount = models.IntegerField()
     owner_username = models.CharField(max_length=255)
     owner_domain = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Property(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
+class ItemProperty(models.Model):
+    value = models.CharField(max_length=255)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='item_properties')
+    item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='properties')
+
+    def __str__(self):
+        return self.name
+
+
+class ItemTag(models.Model):
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='item_tags')
+    item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='tags')
+
+    def __str__(self):
+        return self.name
+
+
+class LendingPeriod(models.Model):
+    start_date = models.DateField()
+    end_date = models.DateField()
+    item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='lending_periods')
 
     def __str__(self):
         return self.name
@@ -22,7 +65,7 @@ class Event(models.Model):
     location = models.CharField(max_length=255)
     date = models.DateField()
     time = models.TimeField()
-    #host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
+    # host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
     host_username = models.CharField(max_length=255)
     host_domain = models.CharField(max_length=255)
 
@@ -37,8 +80,8 @@ class Transaction(models.Model):
         ('rejected', 'Rejected'),
     )
 
-    tool_requested = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='requested_transactions')
-    tool_offered = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='offered_transactions')
+    item_requested = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='requested_transactions')
+    item_offered = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='offered_transactions')
     requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requested_transactions')
     offerer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='offered_transactions')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -48,6 +91,19 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.requester} requests {self.tool_requested} from {self.offerer} in exchange for {self.tool_offered}"
+
+
+class Message(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.sender} to {self.recipient} at {self.created_at}"
 
 
 class Profile(models.Model):
