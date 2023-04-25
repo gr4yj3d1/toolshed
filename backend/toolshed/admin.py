@@ -1,11 +1,11 @@
 from django.contrib import admin
 
-from toolshed.models import InventoryItem, Property, Tag, ItemProperty, ItemTag, LendingPeriod
+from toolshed.models import InventoryItem, Property, Tag, ItemProperty, ItemTag, LendingPeriod, Profile
 
 
 class InventoryItemAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'category', 'availability_policy', 'owned_amount', 'owner_username', 'owner_domain')
-    search_fields = ('name', 'description', 'category', 'availability_policy', 'owned_amount', 'owner_username', 'owner_domain')
+    list_display = ('name', 'description', 'category', 'availability_policy', 'owned_amount', 'owner',)
+    search_fields = ('name', 'description', 'category', 'availability_policy', 'owned_amount', 'owner',)
 
 
 admin.site.register(InventoryItem, InventoryItemAdmin)
@@ -49,3 +49,13 @@ class LendingPeriodAdmin(admin.ModelAdmin):
 
 
 admin.site.register(LendingPeriod, LendingPeriodAdmin)
+
+
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'bio', 'location')
+    search_fields = ('user', 'bio', 'location')
+
+
+admin.site.register(Profile, ProfileAdmin)
+
+

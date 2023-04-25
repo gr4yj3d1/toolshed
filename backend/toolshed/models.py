@@ -1,6 +1,7 @@
-from django.contrib.auth.models import User
 from django.db import models
 from django_softdelete.models import SoftDeleteModel
+
+from authentication.models import ToolshedUser, KnownIdentity
 
 
 class InventoryItem(SoftDeleteModel):
@@ -11,8 +12,7 @@ class InventoryItem(SoftDeleteModel):
     availability_policy = models.CharField(max_length=255)
     # owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inventory_items')
     owned_amount = models.IntegerField()
-    owner_username = models.CharField(max_length=255)
-    owner_domain = models.CharField(max_length=255)
+    owner = models.ForeignKey(KnownIdentity, on_delete=models.CASCADE, related_name='inventory_items')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -59,18 +59,18 @@ class LendingPeriod(models.Model):
         return self.name
 
 
-class Event(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    location = models.CharField(max_length=255)
-    date = models.DateField()
-    time = models.TimeField()
-    # host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
-    host_username = models.CharField(max_length=255)
-    host_domain = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.name
+#class Event(models.Model):
+#    name = models.CharField(max_length=255)
+#    description = models.TextField()
+#    location = models.CharField(max_length=255)
+#    date = models.DateField()
+#    time = models.TimeField()
+#    # host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
+#    host_username = models.CharField(max_length=255)
+#    host_domain = models.CharField(max_length=255)
+#
+#    def __str__(self):
+#        return self.name
 
 
 class Transaction(models.Model):
@@ -82,20 +82,20 @@ class Transaction(models.Model):
 
     item_requested = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='requested_transactions')
     item_offered = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='offered_transactions')
-    requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requested_transactions')
-    offerer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='offered_transactions')
+    requester = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='requested_transactions')
+    offerer = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='offered_transactions')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     message = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.requester} requests {self.tool_requested} from {self.offerer} in exchange for {self.tool_offered}"
+        return f"{self.requester} requests {self.item_requested} from {self.offerer} in exchange for {self.item_offered}"
 
 
 class Message(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    sender = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='received_messages')
     subject = models.CharField(max_length=255)
     body = models.TextField()
     read = models.BooleanField(default=False)
@@ -107,7 +107,7 @@ class Message(models.Model):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(ToolshedUser, on_delete=models.CASCADE)
     # profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     bio = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True)
