@@ -15,24 +15,26 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import TemplateView
-from rest_framework.schemas import get_schema_view
-from rest_framework_swagger.views import get_swagger_view
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework.authtoken import views
 
-schema_view = get_swagger_view(title='Pastebin API')
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Toolshed API",
+        default_version='v1',
+        description="API for all things …",
+    ),
+    public=True,
+    permission_classes=[]
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
-    path('', include("authentication.urls")),
-    path('', include('toolshed.urls')),
-    path('api/docs/', TemplateView.as_view(
-        template_name='api-docs.html',
-        extra_context={'schema_url': 'openapi-schema'}
-    ), name='api-docs'),
-    path('openapi', get_schema_view(
-        title="Toolshed API",
-        description="API for all things …",
-        version="1.0.0"
-    ), name='openapi-schema'),
+    path('auth/token/', views.obtain_auth_token),
+    path('auth/', include('authentication.api')),
+    path('api/', include('toolshed.inventory_api')),
+    path('api/', include('toolshed.friend_api')),
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
 ]
