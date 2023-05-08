@@ -12,7 +12,7 @@ class InventoryItem(SoftDeleteModel):
     availability_policy = models.CharField(max_length=255)
     # owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inventory_items')
     owned_amount = models.IntegerField()
-    owner = models.ForeignKey(KnownIdentity, on_delete=models.CASCADE, related_name='inventory_items')
+    owner = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='inventory_items')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
