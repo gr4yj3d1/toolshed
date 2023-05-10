@@ -26,8 +26,6 @@ SECRET_KEY = 'django-insecure-np^7ug@ag1r261shqver8i$np9x07w@8ejxkbzw8gghqk_cov=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["10.23.42.128"]
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -80,11 +78,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+ALLOWED_HOSTS = ["10.23.42.128", "127.0.0.1"]
+
 CORS_ALLOWED_ORIGINS = [
-    "https://example.com",
-    "https://sub.example.com",
     "http://10.23.42.128:8000",
     "http://10.23.42.128:5173",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:5173",
     "http://localhost:8000",
     "http://localhost:5173",
 ]
@@ -94,8 +94,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
