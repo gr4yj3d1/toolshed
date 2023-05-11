@@ -54,7 +54,12 @@ export default {
     components: {
         ...BIcons
     },
-    props: ['notifications'],
+    props: {
+        notifications: {
+            type: Array,
+            default: () => []
+        }
+    },
     computed: {
         top_notifications() {
             return this.notifications.sort((a, b) => {

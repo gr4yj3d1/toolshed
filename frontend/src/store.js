@@ -13,6 +13,7 @@ export default createStore({
         friends: [],
         item_map: {},
         //notifications: [],
+        messages: [],
         resolver: new FallBackResolver(),
         unreachable_neighbors: new NeighborsCache(),
     },

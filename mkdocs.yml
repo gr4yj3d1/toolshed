@@ -1,0 +1,26 @@
+site_name: Toolshed Documentation
+theme:
+  name: readthedocs
+  locale: de
+  highlightjs: true
+  hljs_languages:
+    - cmake
+    - c
+    - cpp
+    - shell
+    - json
+    - bash
+    - yaml
+    - python
+markdown_extensions:
+  - meta
+  - toc
+  - tables
+  - fenced_code
+plugins:
+  - search
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.js
+extra_css:
+  - toolshed.css
