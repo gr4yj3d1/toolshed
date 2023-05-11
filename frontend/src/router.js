@@ -7,6 +7,7 @@ import Profile from '@/views/Profile.vue';
 import Settings from '@/views/Settings.vue';
 import Inventory from '@/views/Inventory.vue';
 import Friends from "@/views/Friends.vue";
+import Search from "@/views/Search.vue";
 import InventoryNew from "@/views/InventoryNew.vue";
 import InventoryEdit from "@/views/InventoryEdit.vue";
 import InventoryDetail from "@/views/InventoryDetail.vue";
@@ -21,6 +22,7 @@ const routes = [
     {path: '/inventory/:id/edit', component: InventoryEdit, meta: {requiresAuth: true}},
     {path: '/inventory/new', component: InventoryNew, meta: {requiresAuth: true}},
     {path: '/friends', component: Friends, meta: {requiresAuth: true}},
+    {path: '/search/:query', component: Search, meta: {requiresAuth: true}},
     {path: '/login', component: Login, meta: {requiresAuth: false}},
     {path: '/register', component: Register, meta: {requiresAuth: false}},
 ]

@@ -26,9 +26,13 @@
 </template>
 
 <script>
+import * as BIcons from "bootstrap-icons-vue";
 
 export default {
-    name: "Sidebar"
+    name: "Sidebar",
+    components: {
+        ...BIcons
+    },
 }
 </script>
 

@@ -8,10 +8,10 @@
 
         <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#"
            data-toggle="dropdown">
-            <!--<img src="/static/assets/img/avatars/avatar.png" class="avatar img-fluid rounded mr-1"
-                 alt="Charles Hall"/>-->
+            <img src="/assets/img/avatars/avatar.png" class="avatar img-fluid rounded mr-1"
+                 alt="Charles Hall"/>
             <span class="text-dark">
-                        <!--{{ request.user.username }}-->
+                        {{ username }}
                     </span>
         </a>
 
@@ -32,12 +32,22 @@
 </template>
 
 <script>
-
-import Messages from "@/components/Messages.vue";
+import * as BIcons from "bootstrap-icons-vue";
+import {mapMutations} from "vuex";
 
 export default {
     name: "UserDropdown",
-    components: {Messages}
+    components: {
+        ...BIcons
+    },
+    methods: {
+        ...mapMutations(['logout'])
+    },
+    computed: {
+        username() {
+            return this.$route.params.username
+        },
+    }
 }
 </script>
 

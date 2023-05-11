@@ -82,7 +82,6 @@
 </template>
 
 <script>
-import {mapGetters, mapMutations} from 'vuex';
 import * as BIcons from "bootstrap-icons-vue";
 
 export default {

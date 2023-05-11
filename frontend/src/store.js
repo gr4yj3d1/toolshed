@@ -84,7 +84,6 @@ export default createStore({
                 const j = await dispatch('apiLocalGet', {target: '/auth/keys/'})
                 const k = j.key
                 commit('setKey', k)
-                await router.push({path: '/'});
                 return true;
             } else {
                 return false;

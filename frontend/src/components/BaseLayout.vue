@@ -6,14 +6,7 @@
                 <a class="sidebar-toggle d-flex">
                     <i class="hamburger align-self-center"></i>
                 </a>
-                <form class="d-none d-sm-inline-block">
-                    <div class="input-group input-group-navbar">
-                        <input type="text" class="form-control" placeholder="Search…" aria-label="Search">
-                        <button class="btn" type="button">
-                            <b-icon-search class="bi-valign-middle"></b-icon-search>
-                        </button>
-                    </div>
-                </form>
+                <SearchBox/>
                 <div class="navbar-collapse collapse">
                     <ul class="navbar-nav navbar-align">
                         <Notifications :notifications="notifications"/>
@@ -30,32 +23,26 @@
 
 <script>
 import {mapGetters, mapMutations, mapState} from 'vuex';
-import * as BIcons from "bootstrap-icons-vue";
 import Notifications from "@/components/Notifications.vue";
 import Messages from "@/components/Messages.vue";
 import Footer from "@/components/Footer.vue";
 import Sidebar from "@/components/Sidebar.vue";
 import UserDropdown from "@/components/UserDropdown.vue";
+import SearchBox from "@/components/SearchBox.vue";
 
 export default {
     name: 'BaseLayout',
     components: {
+        SearchBox,
         UserDropdown,
         Sidebar,
         Footer,
         Messages,
-        Notifications,
-        ...BIcons
+        Notifications
     },
     computed: {
         ...mapState(['messages']),
-        ...mapGetters(['notifications']),
-        username() {
-            return this.$route.params.username
-        },
-    },
-    methods: {
-        ...mapMutations(['logout'])
+        ...mapGetters(['notifications'])
     },
     async mounted() {
     }

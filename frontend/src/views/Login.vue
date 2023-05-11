@@ -66,6 +66,7 @@
 
 <script>
 import {mapActions, mapMutations} from 'vuex';
+import router from "@/router";
 
 export default {
     name: 'Login',
@@ -82,7 +83,13 @@ export default {
         ...mapMutations(['setRemember']),
         async do_login(e) {
             e.preventDefault();
-            if (!await this.login({username: this.username, password: this.password, remember: this.remember})) {
+            if (await this.login({username: this.username, password: this.password, remember: this.remember})) {
+                if (this.$route.query.redirect) {
+                    await router.push({path: this.$route.query.redirect});
+                } else {
+                    await router.push({path: '/'});
+                }
+            } else {
                 this.msg = 'Invalid username or password';
             }
 
