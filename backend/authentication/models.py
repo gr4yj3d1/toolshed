@@ -25,12 +25,14 @@ class KnownIdentity(models.Model):
 
 class ToolshedUserManager(auth.models.BaseUserManager):
     def create_user(self, username, email, password, **extra_fields):
-        private_key = SigningKey.generate()
+        domain = extra_fields.pop('domain', 'localhost')
+        private_key_hex = extra_fields.pop('private_key', None)
+        private_key = SigningKey(bytes.fromhex(private_key_hex)) if private_key_hex else SigningKey.generate()
         public_key = SigningKey(private_key.encode()).verify_key
         extra_fields['private_key'] = private_key.encode(encoder=HexEncoder).decode('utf-8')
         extra_fields['public_identity'] = KnownIdentity.objects.create(
-            username=username, domain='localhost', public_key=public_key.encode(encoder=HexEncoder).decode('utf-8'))
-        user = super().create(username=username, email=email, password=password, **extra_fields)
+            username=username, domain=domain, public_key=public_key.encode(encoder=HexEncoder).decode('utf-8'))
+        user = super().create(username=username, email=email, password=password, domain=domain, **extra_fields)
         return user
 
     def create_superuser(self, username, email, password, **extra_fields):
@@ -41,6 +43,7 @@ class ToolshedUserManager(auth.models.BaseUserManager):
 
 
 class ToolshedUser(AbstractUser):
+    domain = models.CharField(max_length=255, default='localhost')
     private_key = models.CharField(max_length=255)
     friends = models.ManyToManyField(KnownIdentity, related_name='friends')
     public_identity = models.ForeignKey(KnownIdentity, on_delete=models.CASCADE, related_name='user')

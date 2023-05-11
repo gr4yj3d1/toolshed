@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'authentication',
+    'hostadmin',
     'toolshed',
 ]
 

@@ -16,7 +16,7 @@ class InventoryItemOwnerSerializer(serializers.ReadOnlyField):
 
     def to_representation(self, value):
         # TODO: this is a hack, fix it
-        return value.username + '@domain.todo'
+        return value.username + '@' + value.domain
 
 
 class InventoryItemSerializer(serializers.ModelSerializer):
@@ -27,8 +27,12 @@ class InventoryItemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-def inventory_items(user):
-    for friend in user.friends.all():
+def inventory_items(identity):
+    user = identity.user.get()
+    if user:
+        for item in user.inventory_items.all():
+            yield item
+    for friend in identity.friends.all():
         for item in friend.inventory_items.all():
             yield item
 

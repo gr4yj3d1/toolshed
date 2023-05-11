@@ -30,9 +30,10 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('djangoadmin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('auth/token/', views.obtain_auth_token),
+    path('admin/', include('hostadmin.api')),
     path('auth/', include('authentication.api')),
     path('api/', include('toolshed.inventory_api')),
     path('api/', include('toolshed.friend_api')),
