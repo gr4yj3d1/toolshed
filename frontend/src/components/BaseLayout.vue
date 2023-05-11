@@ -98,7 +98,7 @@
                             <ul class="list-inline">
                                 <li class="list-inline-item">
                                     <a class="text-muted"
-                                       target="_blank" href="https://github.com/gr4yj3d1/toolshed">Dev Docs</a>
+                                       target="_blank" href="/docs/">API Docs</a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a class="text-muted"

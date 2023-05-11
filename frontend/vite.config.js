@@ -20,9 +20,23 @@ export default defineConfig({
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token, Authorization, Accept,charset,boundary,Content-Length',
             'Access-Control-Allow-Credentials': 'true'
-
-
-
+        },
+        proxy: {
+            '^/api/': {
+                target: "http://127.0.0.1:8000/",
+            },
+            '^/auth/': {
+                target: "http://127.0.0.1:8000/",
+            },
+            '^/admin/': {
+                target: "http://127.0.0.1:8000/",
+            },
+            '^/docs/': {
+                target: "http://127.0.0.1:8000/",
+            },
+            '^/static/': {
+                target: "http://127.0.0.1:8000/",
+            }
         }
     }
 })

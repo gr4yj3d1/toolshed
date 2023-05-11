@@ -72,28 +72,18 @@ export default createStore({
     },
     actions: {
         async login({commit, dispatch, state}, {username, password, remember}) {
-            //this.setRemember(remember)
-            this.commit('setRemember', remember);
-            /*const response = await fetch('http://10.23.42.128:8000/auth/token/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username, password: password
-                })
-            })*/
+            commit('setRemember', remember);
             const data = await dispatch('apiLocalPost', {
-                target: '/token/', data: {
+                target: '/auth/token/', data: {
                     username: username, password: password
                 }
             })
             if (data.token) {
                 commit('setToken', data.token);
-                commit('setUser', username + '@example.com');
-                const j = await dispatch('apiLocalGet', {target: '/keys/'})
+                commit('setUser', username);
+                const j = await dispatch('apiLocalGet', {target: '/auth/keys/'})
                 const k = j.key
-                this.commit('setKey', k)
+                commit('setKey', k)
                 await router.push({path: '/'});
                 return true;
             } else {
@@ -120,6 +110,9 @@ export default createStore({
             if (state.unreachable_neighbors.queryUnreachable(host)) {
                 throw new Error('unreachable neighbor')
             }
+            if(!state.user || !state.keypair) {
+                throw new Error('no user or keypair')
+            }
             const url = host + target
             const signature = nacl.crypto_sign_detached(nacl.encode_utf8(url), state.keypair.signSk)
             const auth = 'Signature ' + state.user + ':' + nacl.to_hex(signature)
@@ -128,12 +121,15 @@ export default createStore({
                 headers: {
                     'Authorization': auth
                 }
-            }).catch( err => state.unreachable_neighbors.unreachable(host)
+            }).catch(err => state.unreachable_neighbors.unreachable(host)
             ).then(response => response.json())
         },
         async apiFederatedPost({state}, {host, target, data}) {
             if (state.unreachable_neighbors.queryUnreachable(host)) {
                 throw new Error('unreachable neighbor')
+            }
+            if(!state.user || !state.keypair) {
+                throw new Error('no user or keypair')
             }
             const url = host + target
             const json = JSON.stringify(data)
@@ -146,24 +142,26 @@ export default createStore({
                     'Content-Type': 'application/json'
                 },
                 body: json
-            }).catch( err => state.unreachable_neighbors.unreachable(host)
+            }).catch(err => state.unreachable_neighbors.unreachable(host)
             ).then(response => response.json())
         },
         async apiLocalGet({state}, {target}) {
             const auth = state.token ? {'Authorization': 'Token ' + state.token} : {}
-            return await fetch('http://10.23.42.128:8000/auth' + target, {
+            return await fetch(target, {
                 method: 'GET',
-                headers: auth
+                headers: auth,
+                credentials: 'omit'
             }).then(response => response.json())
         },
         async apiLocalPost({state}, {target, data}) {
             const auth = state.token ? {'Authorization': 'Token ' + state.token} : {}
-            return await fetch('http://10.23.42.128:8000/auth' + target, {
+            return await fetch(target, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...auth
                 },
+                credentials: 'omit',
                 body: JSON.stringify(data)
             }).then(response => response.json())
         }

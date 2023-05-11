@@ -17,7 +17,6 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
-from rest_framework.authtoken import views
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -31,11 +30,11 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('djangoadmin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls')),
-    path('auth/token/', views.obtain_auth_token),
+    #path('api-auth/', include('rest_framework.urls')),
     path('admin/', include('hostadmin.api')),
     path('auth/', include('authentication.api')),
     path('api/', include('toolshed.inventory_api')),
     path('api/', include('toolshed.friend_api')),
+    path('api/', include('toolshed.info_api')),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
 ]

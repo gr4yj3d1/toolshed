@@ -30,10 +30,14 @@ class ToolshedUserManager(auth.models.BaseUserManager):
         private_key = SigningKey(bytes.fromhex(private_key_hex)) if private_key_hex else SigningKey.generate()
         public_key = SigningKey(private_key.encode()).verify_key
         extra_fields['private_key'] = private_key.encode(encoder=HexEncoder).decode('utf-8')
-        extra_fields['public_identity'] = KnownIdentity.objects.create(
+        extra_fields['public_identity'] = identity = KnownIdentity.objects.create(
             username=username, domain=domain, public_key=public_key.encode(encoder=HexEncoder).decode('utf-8'))
-        user = super().create(username=username, email=email, password=password, domain=domain, **extra_fields)
-        return user
+        try:
+            user = super().create(username=username, email=email, password=password, domain=domain, **extra_fields)
+            return user
+        except Exception as e:
+            identity.delete()
+            raise e
 
     def create_superuser(self, username, email, password, **extra_fields):
         user = self.create_user(username=username, email=email, password=password, **extra_fields)
