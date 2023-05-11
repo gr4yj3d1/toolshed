@@ -3,8 +3,8 @@
 </script>
 
 <template>
-    <BaseLayout :username="username">
-        <main class="container">
+    <BaseLayout>
+        <main class="content">
             <div class="row">
                 <div class="col">
                     <div class="card">

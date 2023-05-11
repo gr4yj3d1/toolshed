@@ -72,9 +72,11 @@ export default {
         async getInventoryItems() {
             try {
                 const servers = await this.getFriends().then(friends => friends.map(friend => this.getFriendServer({username: friend})))
-                const urls = servers.map(server => server.then(s => `http://${s}/api/inventory_items/`))
+                const urls = servers.map(server => server.then(s => {
+                    return {host: `http://${s}`, target: "/api/inventory_items/"}
+                }))
                 urls.map(url => url.then(u => this.apiFederatedGet(u).then(items => {
-                    this.setInventoryItems({url: u, items})
+                    this.setInventoryItems({url: u.domain, items})
                 }).catch(e => {
                 }))) // TODO: handle error
             } catch (e) {

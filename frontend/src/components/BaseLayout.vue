@@ -47,80 +47,7 @@
                 </form>
                 <div class="navbar-collapse collapse">
                     <ul class="navbar-nav navbar-align">
-                        <li class="nav-item dropdown">
-                            <a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-toggle="dropdown">
-                                <div class="position-relative">
-                                    <b-icon-bell class="bi-valign-middle"></b-icon-bell>
-                                    <span class="indicator">4</span>
-                                </div>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right py-0"
-                                 aria-labelledby="alertsDropdown">
-                                <div class="dropdown-menu-header">
-                                    4 New Notifications
-                                </div>
-                                <div class="list-group">
-                                    <a href="#" class="list-group-item">
-                                        <div class="row g-0 align-items-center">
-                                            <div class="col-2">
-                                                <b-icon-exclamation-circle
-                                                        class="bi-valign-middle text-danger"></b-icon-exclamation-circle>
-                                            </div>
-                                            <div class="col-10">
-                                                <div class="text-dark">Update completed</div>
-                                                <div class="text-muted small mt-1">Restart server 12 to complete the
-                                                    update.
-                                                </div>
-                                                <div class="text-muted small mt-1">30m ago</div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    <a href="#" class="list-group-item">
-                                        <div class="row g-0 align-items-center">
-                                            <div class="col-2">
-                                                <b-icon-bell class="bi-valign-middle text-warning"></b-icon-bell>
-                                            </div>
-                                            <div class="col-10">
-                                                <div class="text-dark">Lorem ipsum</div>
-                                                <div class="text-muted small mt-1">Aliquam ex eros, imperdiet vulputate
-                                                    hendrerit
-                                                    et.
-                                                </div>
-                                                <div class="text-muted small mt-1">2h ago</div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    <a href="#" class="list-group-item">
-                                        <div class="row g-0 align-items-center">
-                                            <div class="col-2">
-                                                <b-icon-house class="bi-valign-middle text-primary"></b-icon-house>
-                                            </div>
-                                            <div class="col-10">
-                                                <div class="text-dark">Login from 192.186.1.8</div>
-                                                <div class="text-muted small mt-1">5h ago</div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    <!--{% for notification in top_notifications %}
-                                    <a href="#" class="list-group-item">
-                                        <div class="row g-0 align-items-center">
-                                            <div class="col-2">
-                                                {% bs_icon 'person-add' extra_classes="bi-valign-middle text-success" %}
-                                            </div>
-                                            <div class="col-10">
-                                                <div class="text-dark">New connection</div>
-                                                <div class="text-muted small mt-1">Christina accepted your request.</div>
-                                                <div class="text-muted small mt-1">14h ago</div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    {% endfor %}-->
-                                </div>
-                                <div class="dropdown-menu-footer">
-                                    <a href="#" class="text-muted">Show all notifications</a>
-                                </div>
-                            </div>
-                        </li>
+                        <Notifications :notifications="notifications"/>
                         <li class="nav-item dropdown">
                             <a class="nav-icon dropdown-toggle" href="#" id="messagesDropdown" data-toggle="dropdown">
                                 <div class="position-relative">
@@ -268,18 +195,25 @@
 </template>
 
 <script>
-import {mapGetters, mapMutations} from 'vuex';
+import {mapGetters, mapMutations, mapState} from 'vuex';
 import * as BIcons from "bootstrap-icons-vue";
+import Notifications from "@/components/Notifications.vue";
 
 export default {
     name: 'BaseLayout',
     components: {
+        Notifications,
         ...BIcons
     },
     computed: {
+        //...mapState(['notifications']),
+        ...mapGetters(['notifications']),
         username() {
             return this.$route.params.username
-        }
+        },
+        top_notifications() {
+            return this.notifications.slice(0, 5)
+        },
     },
     methods: {
         ...mapMutations(['logout'])

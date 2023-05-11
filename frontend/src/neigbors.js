@@ -33,6 +33,15 @@ class NeighborsCache {
         }
         return false;
     }
+
+    list() {
+        return Object.entries(this._cache).map(([domain, elem]) => {
+            return {
+                domain: domain,
+                time: elem.time
+            }
+        })
+    }
 }
 
 export default NeighborsCache;

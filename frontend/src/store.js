@@ -12,16 +12,9 @@ export default createStore({
         remember: false,
         friends: [],
         item_map: {},
+        //notifications: [],
         resolver: new FallBackResolver(),
         unreachable_neighbors: new NeighborsCache(),
-        /*wk: new Wellknown({
-            update: true, // Will load latest definitions from updateURL.
-            updateURL: new URL(), // URL to load the latest definitions. (default: project URL)
-            persist: false, // True to persist the loaded definitions (nodejs: in filesystem, browser: localStorage)
-            localStoragePrefix: 'dnsquery_', // Prefix for files persisted.
-            maxAge: 300000, // Max age of persisted data to be used in ms.
-            timeout: 5000 // Timeout when loading updates.
-        })*/
     },
     mutations: {
         setUser(state, user) {
@@ -105,7 +98,6 @@ export default createStore({
             } else {
                 return false;
             }
-
         },
         async getFriends(state) {
             return ['jedi@j3d1.de', 'foobar@example.com', 'foobaz@example.eleon'];
@@ -123,10 +115,11 @@ export default createStore({
                 (result) => result.map(
                     (answer) => answer.target + ':' + answer.port))
         },
-        async apiFederatedGet({state}, url) {
-            if (state.unreachable_neighbors.queryUnreachable(url)) {
+        async apiFederatedGet({state}, {host, target}) {
+            if (state.unreachable_neighbors.queryUnreachable(host)) {
                 throw new Error('unreachable neighbor')
             }
+            const url = host + target
             const signature = nacl.crypto_sign_detached(nacl.encode_utf8(url), state.keypair.signSk)
             const auth = 'Signature ' + state.user + ':' + nacl.to_hex(signature)
             return await fetch(url, {
@@ -134,13 +127,14 @@ export default createStore({
                 headers: {
                     'Authorization': auth
                 }
-            }).catch( err => state.unreachable_neighbors.unreachable(url)
+            }).catch( err => state.unreachable_neighbors.unreachable(host)
             ).then(response => response.json())
         },
-        async apiFederatedPost({state}, {url, data}) {
-            if (state.unreachable_neighbors.queryUnreachable(url)) {
+        async apiFederatedPost({state}, {host, target, data}) {
+            if (state.unreachable_neighbors.queryUnreachable(host)) {
                 throw new Error('unreachable neighbor')
             }
+            const url = host + target
             const json = JSON.stringify(data)
             const signature = nacl.crypto_sign_detached(nacl.encode_utf8(url + json), state.keypair.signSk)
             const auth = 'Signature ' + state.user + ':' + nacl.to_hex(signature)
@@ -151,7 +145,7 @@ export default createStore({
                     'Content-Type': 'application/json'
                 },
                 body: json
-            }).catch( err => state.unreachable_neighbors.unreachable(url)
+            }).catch( err => state.unreachable_neighbors.unreachable(host)
             ).then(response => response.json())
         },
         async apiLocalGet({state}, {target}) {
@@ -181,6 +175,42 @@ export default createStore({
             return Object.entries(state.item_map).reduce((acc, [url, items]) => {
                 return acc.concat(items)
             }, [])
-        }
+        },
+        notifications(state) {
+            // supported types: error, warning, info, login, success, friend
+            const u = state.unreachable_neighbors.list().map(elem => {
+                return {
+                    type: 'error',
+                    title: elem.domain + ' unreachable',
+                    msg: 'The neighbor ' + elem.domain + ' is currently unreachable. Please try again later.',
+                    time: elem.time
+                }
+            })
+            return [...u, {
+                type: 'info',
+                title: 'Welcome to the Toolshed',
+                msg: 'This is a federated social network. You can add friends from other servers and share items with them.',
+                time: Date.now()
+            }, {
+                type: 'warning',
+                title: 'Lorem ipsum',
+                msg: 'Aliquam ex eros, imperdiet vulputate hendrerit et.',
+                time: Date.now() - 1000 * 60 * 60 * 2
+            }, {
+                type: 'login',
+                title: 'Login from 192.186.1.8',
+                time: Date.now() - 1000 * 60 * 60 * 5
+            }, {
+                type: 'friend',
+                title: 'New connection',
+                msg: 'Christina accepted your request.',
+                time: Date.now() - 1000 * 60 * 60 * 14
+            }, {
+                type: 'success',
+                title: 'Lorem ipsum',
+                msg: 'Aliquam ex eros, imperdiet vulputate hendrerit et.',
+                time: Date.now() - 1000 * 60 * 60 * 24
+            }]
+        },
     }
 })
