@@ -1,9 +1,13 @@
 # toolshed
 
-## Installation
+## Installation / Development
 
 ``` bash
 git clone https://github.com/gr4yj3d1/toolshed.git
+```
+or
+``` bash
+git clone https://git.neulandlabor.de/j3d1/toolshed.git
 ```
 
 ### Backend
@@ -22,7 +26,7 @@ python manage.py runserver
 ``` bash
 cd toolshed/frontend
 npm install
-npm run serve
+npm run dev
 ```
 
 ### Docs
