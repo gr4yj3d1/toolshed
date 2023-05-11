@@ -19,7 +19,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="friend in friends" :key="friend.name">
+                                <tr v-for="friend in friendslist" :key="friend.name">
                                     <td>{{ friend.name }}</td>
                                     <td class="d-none d-md-table-cell">{{ friend.server.join(', ') }}</td>
                                     <td class="table-action">
@@ -33,6 +33,10 @@
                                 </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="card">
+                            <button class="btn" @click="fetchFriends">Refresh</button>
+                            <router-link to="/inventory/new" class="btn btn-primary">Add</router-link>
                         </div>
                     </div>
                 </div>
@@ -54,31 +58,36 @@ export default {
     },
     data() {
         return {
-            friends: [],
+            friends: {},
         }
     },
     computed: {
         username() {
             return this.$route.params.username
         },
-        inventory_items() {
-            return this.local_items.concat(this.eleon_items)
+        friendslist() {
+            return Object.keys(this.friends).map((friend) => {
+                return {
+                    name: friend,
+                    server: this.friends[friend]
+                }
+            })
         }
     },
     methods: {
         ...mapActions(['getFriends', "getFriendServer"]),
-    },
-    mounted() {
-        this.getFriends().then((friends) => {
-            friends.map((friend) => {
-                this.getFriendServer({username: friend}).then((server) => {
-                    this.friends.push({
-                        name: friend,
-                        server: server
+        fetchFriends() {
+            this.getFriends().then((friends) => {
+                friends.map((friend) => {
+                    this.getFriendServer({username: friend}).then((server) => {
+                        this.friends[friend] = server
                     })
                 })
             })
-        })
+        }
+    },
+    mounted() {
+        this.fetchFriends()
     }
 }
 </script>

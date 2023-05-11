@@ -12,9 +12,9 @@
                                 <h5 class="card-title mb-0">Profile Details</h5>
                             </div>
                             <div class="card-body text-center">
-                                <!--<img src="/static/assets/img/avatars/avatar.png"
+                                <img src="/assets/img/avatars/avatar.png"
                                      alt="Christina Mason" class="img-fluid rounded-circle mb-2" width="128"
-                                     height="128"/>-->
+                                     height="128"/>
                                 <h5 class="card-title mb-0">
                                     {{ user.username }}
                                 </h5>
@@ -94,8 +94,8 @@
                             <div class="card-body h-100">
 
                                 <div class="d-flex align-items-start">
-                                    <!--<img src="/static/assets/img/avatars/avatar-5.png" width="36" height="36"
-                                         class="rounded-circle mr-2" alt="Vanessa Tucker">-->
+                                    <img src="/assets/img/avatars/avatar-5.png" width="36" height="36"
+                                         class="rounded-circle mr-2" alt="Vanessa Tucker">
                                     <div class="flex-grow-1">
                                         <small class="float-right text-navy">5m ago</small>
                                         <strong>Vanessa Tucker</strong> started following <strong>Christina
@@ -107,8 +107,8 @@
 
                                 <hr/>
                                 <div class="d-flex align-items-start">
-                                    <!--<img src="/static/assets/img/avatars/avatar.png" width="36" height="36"
-                                         class="rounded-circle mr-2" alt="Charles Hall">-->
+                                    <img src="/assets/img/avatars/avatar.png" width="36" height="36"
+                                          class="rounded-circle mr-2" alt="Charles Hall">
                                     <div class="flex-grow-1">
                                         <small class="float-right text-navy">30m ago</small>
                                         <strong>Charles Hall</strong> posted something on <strong>Christina
@@ -132,8 +132,8 @@
 
                                 <hr/>
                                 <div class="d-flex align-items-start">
-                                    <!--<img src="/static/assets/img/avatars/avatar-4.png" width="36" height="36"
-                                         class="rounded-circle mr-2" alt="Christina Mason">-->
+                                    <img src="/assets/img/avatars/avatar-4.png" width="36" height="36"
+                                          class="rounded-circle mr-2" alt="Christina Mason">
                                     <div class="flex-grow-1">
                                         <small class="float-right text-navy">1h ago</small>
                                         <strong>Christina Mason</strong> posted a new blog<br/>
@@ -144,8 +144,8 @@
 
                                 <hr/>
                                 <div class="d-flex align-items-start">
-                                    <!--<img src="/static/assets/img/avatars/avatar-2.png" width="36" height="36"
-                                         class="rounded-circle mr-2" alt="William Harris">-->
+                                    <img src="/assets/img/avatars/avatar-2.png" width="36" height="36"
+                                          class="rounded-circle mr-2" alt="William Harris">
                                     <div class="flex-grow-1">
                                         <small class="float-right text-navy">3h ago</small>
                                         <strong>William Harris</strong> posted two photos on <strong>Christina
@@ -154,12 +154,12 @@
 
                                         <div class="row g-0 mt-1">
                                             <div class="col-6 col-md-4 col-lg-4 col-xl-3">
-                                                <!--<img src="/static/assets/img/photos/unsplash-1.jpg"
-                                                     class="img-fluid pr-2" alt="Unsplash">-->
+                                                <img src="/assets/img/photos/unsplash-1.jpg"
+                                                     class="img-fluid pr-2" alt="Unsplash">
                                             </div>
                                             <div class="col-6 col-md-4 col-lg-4 col-xl-3">
-                                                <!--<img src="/static/assets/img/photos/unsplash-2.jpg"
-                                                     class="img-fluid pr-2" alt="Unsplash">-->
+                                                <img src="/assets/img/photos/unsplash-2.jpg"
+                                                      class="img-fluid pr-2" alt="Unsplash">
                                             </div>
                                         </div>
 
@@ -171,8 +171,8 @@
 
                                 <hr/>
                                 <div class="d-flex align-items-start">
-                                    <!--<img src="/static/assets/img/avatars/avatar-2.png" width="36" height="36"
-                                         class="rounded-circle mr-2" alt="William Harris">-->
+                                    <img src="/assets/img/avatars/avatar-2.png" width="36" height="36"
+                                          class="rounded-circle mr-2" alt="William Harris">
                                     <div class="flex-grow-1">
                                         <small class="float-right text-navy">1d ago</small>
                                         <strong>William Harris</strong> started following <strong>Christina
@@ -181,8 +181,8 @@
 
                                         <div class="d-flex align-items-start mt-1">
                                             <a class="pr-3" href="#">
-                                                <!--<img src="/static/assets/img/avatars/avatar-4.png" width="36"
-                                                     height="36" class="rounded-circle mr-2" alt="Christina Mason">-->
+                                                <img src="/assets/img/avatars/avatar-4.png" width="36"
+                                                      height="36" class="rounded-circle mr-2" alt="Christina Mason">
                                             </a>
                                             <div class="flex-grow-1">
                                                 <div class="border text-sm text-muted p-2 mt-1">
@@ -196,8 +196,8 @@
 
                                 <hr/>
                                 <div class="d-flex align-items-start">
-                                    <!--<img src="/static/assets/img/avatars/avatar-4.png" width="36" height="36"
-                                         class="rounded-circle mr-2" alt="Christina Mason">-->
+                                    <img src="/assets/img/avatars/avatar-4.png" width="36" height="36"
+                                          class="rounded-circle mr-2" alt="Christina Mason">
                                     <div class="flex-grow-1">
                                         <small class="float-right text-navy">1d ago</small>
                                         <strong>Christina Mason</strong> posted a new blog<br/>
@@ -207,8 +207,8 @@
 
                                 <hr/>
                                 <div class="d-flex align-items-start">
-                                    <!--<img src="/static/assets/img/avatars/avatar.png" width="36" height="36"
-                                         class="rounded-circle mr-2" alt="Charles Hall">-->
+                                    <img src="/assets/img/avatars/avatar.png" width="36" height="36"
+                                          class="rounded-circle mr-2" alt="Charles Hall">
                                     <div class="flex-grow-1">
                                         <small class="float-right text-navy">1d ago</small>
                                         <strong>Charles Hall</strong> started following <strong>Christina
@@ -223,7 +223,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </main>
     </BaseLayout>

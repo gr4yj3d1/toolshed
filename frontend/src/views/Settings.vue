@@ -79,7 +79,7 @@
                                                 <div class="col-md-4">
                                                     <div class="text-center">
                                                         <img alt="Charles Hall"
-                                                             src="/static/assets/img/avatars/avatar.png"
+                                                             src="/assets/img/avatars/avatar.png"
                                                              class="rounded-circle img-responsive mt-2" width="128"
                                                              height="128"/>
                                                         <div class="mt-2">

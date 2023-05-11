@@ -16,8 +16,8 @@
                 <a href="#" class="list-group-item">
                     <div class="row g-0 align-items-center">
                         <div class="col-2">
-                            <!--<img src="/static/assets/img/avatars/avatar-5.png"
-                                 class="avatar img-fluid rounded-circle" alt="Vanessa Tucker">-->
+                            <img src="/assets/img/avatars/avatar-5.png"
+                                 class="avatar img-fluid rounded-circle" alt="Vanessa Tucker">
                         </div>
                         <div class="col-10 pl-2">
                             <div class="text-dark">Vanessa Tucker</div>
@@ -31,8 +31,8 @@
                 <a href="#" class="list-group-item">
                     <div class="row g-0 align-items-center">
                         <div class="col-2">
-                            <!--<img src="/static/assets/img/avatars/avatar-2.png"
-                                 class="avatar img-fluid rounded-circle" alt="William Harris">-->
+                            <img src="/assets/img/avatars/avatar-2.png"
+                                 class="avatar img-fluid rounded-circle" alt="William Harris">
                         </div>
                         <div class="col-10 pl-2">
                             <div class="text-dark">William Harris</div>
@@ -46,8 +46,8 @@
                 <a href="#" class="list-group-item">
                     <div class="row g-0 align-items-center">
                         <div class="col-2">
-                            <!--<img src="/static/assets/img/avatars/avatar-4.png"
-                                 class="avatar img-fluid rounded-circle" alt="Christina Mason">-->
+                            <img src="/assets/img/avatars/avatar-4.png"
+                                 class="avatar img-fluid rounded-circle" alt="Christina Mason">
                         </div>
                         <div class="col-10 pl-2">
                             <div class="text-dark">Christina Mason</div>
@@ -57,12 +57,11 @@
                         </div>
                     </div>
                 </a>
-                <!-- {% for messege in top_messages %}-->
                 <a href="#" class="list-group-item">
                     <div class="row g-0 align-items-center">
                         <div class="col-2">
-                            <!--<img src="/static/assets/img/avatars/avatar-3.png"
-                                 class="avatar img-fluid rounded-circle" alt="Sharon Lessman">-->
+                            <img src="/assets/img/avatars/avatar-3.png"
+                                 class="avatar img-fluid rounded-circle" alt="Sharon Lessman">
                         </div>
                         <div class="col-10 pl-2">
                             <div class="text-dark">Sharon Lessman</div>
@@ -74,7 +73,6 @@
                         </div>
                     </div>
                 </a>
-                <!--{% endfor %}-->
             </div>
             <div class="dropdown-menu-footer">
                 <a href="#" class="text-muted">Show all messages</a>

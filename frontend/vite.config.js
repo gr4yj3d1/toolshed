@@ -19,7 +19,8 @@ export default defineConfig({
             //'Access-Control-Allow-Origin': 'http://10.23.42.128:8000, http://10.23.42.168:8000',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token, Authorization, Accept,charset,boundary,Content-Length',
-            'Access-Control-Allow-Credentials': 'true'
+            'Access-Control-Allow-Credentials': 'true',
+            'Content-Security-Policy': 'default-src \'self\' \'unsafe-inline\' \'unsafe-eval\' data: \'self\' connect-src *', // change to https://* for production
         },
         proxy: {
             '^/api/': {
@@ -36,6 +37,13 @@ export default defineConfig({
             },
             '^/static/': {
                 target: "http://127.0.0.1:8000/",
+            },
+            '^/wiki/': {
+                target: "http://127.0.0.1:8080/",
+                rewrite: (path) => path.replace(/^\/wiki/, ''),
+            },
+            '^/livereload/': {
+                target: "http://127.0.0.1:8080/",
             }
         }
     }

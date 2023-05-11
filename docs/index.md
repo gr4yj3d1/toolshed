@@ -3,17 +3,50 @@
 ## Introduction
 
 This is the documentation for the Toolshed project. It is a work in progress.
+`#social` `#network` `#federation` `#decentralized` `#federated` `#socialnetwork` `#fediverse` `#community` `#hashtags`
 
 ## Getting Started
 
-### Prerequisites
+## Installation
 
-* [Python](https://www.python.org/) (v3.7.3 or higher)
-* [pip](https://pip.pypa.io/en/stable/) (v19.1.1 or higher)
-* [virtualenv](https://virtualenv.pypa.io/en/latest/) (v16.6.0 or higher)
-* [mkdocs](https://www.mkdocs.org/) (v1.0.4 or higher)
-* [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) (v4.4.3 or higher)
-* [Vue CLI](https://cli.vuejs.org/) (v3.7.0 or higher)
-* [Vue.js](https://vuejs.org/) (v2.6.10 or higher)
-* [Vue Router](https://router.vuejs.org/) (v3.0.3 or higher)
-* [Vuex](https://vuex.vuejs.org/) (v3.1.0 or higher)
+``` bash
+ # TODO add installation instructions
+ # similar to development instructions just with more docker
+ # TODO add docker-compose.yml
+```
+
+## Development
+
+``` bash
+git clone https://github.com/gr4yj3d1/toolshed.git
+```
+or
+``` bash
+git clone https://git.neulandlabor.de/j3d1/toolshed.git
+```
+
+### Frontend
+
+``` bash
+cd toolshed/frontend
+npm install
+npm run dev
+```
+
+### Backend
+
+``` bash
+cd toolshed/backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8000
+```
+
+### Docs
+
+``` bash
+cd toolshed/docs
+mkdocs serve -a 0.0.0.0:8080
+```
