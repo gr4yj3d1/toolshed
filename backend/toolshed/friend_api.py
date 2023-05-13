@@ -101,29 +101,33 @@ class FriendsRequests(APIView, ViewSetMixin):
             )
             return Response(status=status.HTTP_201_CREATED, data={'secret': secret, 'status': "pending"})
         elif verify_incoming_friend_request(request, raw_request):
-            befriendee = ToolshedUser.objects.get(username=befriendee_username, domain=befriendee_domain)
-            outgoing = FriendRequestOutgoing.objects.filter(
-                secret=request.data['secret'],
-                befriender_user=befriendee,  # both sides match
-                befriendee_username=befriender_username,
-                befriendee_domain=befriender_domain)
-            if outgoing.exists():
-                befriender = KnownIdentity.objects.create(
-                    username=befriender_username,
-                    domain=befriender_domain,
-                    public_key=request.data['befriender_key']
-                )
-                befriendee.friends.add(befriender)
-                return Response(status=status.HTTP_201_CREATED, data={'status': "accepted"})
-            else:
-                FriendRequestIncoming.objects.create(
-                    befriender_username=befriender_username,
-                    befriender_domain=befriender_domain,
-                    befriender_public_key=request.data['befriender_key'],
-                    befriendee=befriendee,
-                    secret=request.data['secret']
-                )
-                return Response(status=status.HTTP_201_CREATED, data={'status': "pending"})
+            try:
+                befriendee = ToolshedUser.objects.get(username=befriendee_username, domain=befriendee_domain)
+
+                outgoing = FriendRequestOutgoing.objects.filter(
+                    secret=request.data['secret'],
+                    befriender_user=befriendee,  # both sides match
+                    befriendee_username=befriender_username,
+                    befriendee_domain=befriender_domain)
+                if outgoing.exists():
+                    befriender = KnownIdentity.objects.create(
+                        username=befriender_username,
+                        domain=befriender_domain,
+                        public_key=request.data['befriender_key']
+                    )
+                    befriendee.friends.add(befriender)
+                    return Response(status=status.HTTP_201_CREATED, data={'status': "accepted"})
+                else:
+                    FriendRequestIncoming.objects.create(
+                        befriender_username=befriender_username,
+                        befriender_domain=befriender_domain,
+                        befriender_public_key=request.data['befriender_key'],
+                        befriendee=befriendee,
+                        secret=request.data['secret']
+                    )
+                    return Response(status=status.HTTP_201_CREATED, data={'status': "pending"})
+            except ToolshedUser.DoesNotExist:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 

@@ -152,5 +152,5 @@ def authenticate_request_against_local_users(request, raw_request):
 
 class SignatureAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
-        return authenticate_request_against_known_identities(request,
-                                                             request.body.decode('utf-8')), None  # TODO: return user?
+        return authenticate_request_against_known_identities(
+            request, request.body.decode('utf-8')), None  # TODO: return user?
