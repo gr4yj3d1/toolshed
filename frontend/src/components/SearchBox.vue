@@ -32,8 +32,8 @@ export default {
         }
     },
     mounted() {
-        console.log(this.$route)
-        console.log(this.$route.params.query)
+        //console.log(this.$route)
+        //console.log(this.$route.params.query)
         this.query = decodeURIComponent(this.$route.params.query || encodeURIComponent(""));
     }
 }

@@ -14,13 +14,13 @@ class KnownIdentityAdmin(admin.ModelAdmin):
 
 
 class FriendRequestOutgoingAdmin(admin.ModelAdmin):
-    list_display = ('nonce', 'from_user', 'to_username', 'to_domain', 'created_at')
-    search_fields = ('nonce', 'from_user', 'to_username', 'to_domain', 'created_at')
+    list_display = ('secret', 'befriender_user', 'befriendee_username', 'befriendee_domain')
+    search_fields = ('secret', 'befriender_user', 'befriendee_username', 'befriendee_domain')
 
 
 class FriendRequestIncomingAdmin(admin.ModelAdmin):
-    list_display = ('nonce', 'from_username')
-    search_fields = ('nonce', 'from_username')
+    list_display = ('secret', 'befriender_username', 'befriender_domain', 'befriendee_user', 'befriender_public_key')
+    search_fields = ('secret', 'befriender_username', 'befriender_domain', 'befriendee_user', 'befriender_public_key')
 
 
 admin.site.register(ToolshedUser, ToolshedUserAdmin)

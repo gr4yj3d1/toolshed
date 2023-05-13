@@ -55,16 +55,17 @@ class ToolshedUser(AbstractUser):
 
 
 class FriendRequestOutgoing(models.Model):
-    nonce = models.CharField(max_length=255)
-    from_user = models.ForeignKey(KnownIdentity, on_delete=models.DO_NOTHING, related_name='friend_requests_outgoing')
-    to_username = models.CharField(max_length=255)
-    to_domain = models.CharField(max_length=255)
+    secret = models.CharField(max_length=255)
+    befriender_user = models.ForeignKey(ToolshedUser, on_delete=models.DO_NOTHING, related_name='friend_requests_outgoing')
+    befriendee_username = models.CharField(max_length=255)
+    befriendee_domain = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
 class FriendRequestIncoming(models.Model):
-    nonce = models.CharField(max_length=255)
-    from_username = models.CharField(max_length=255)
-    from_domain = models.CharField(max_length=255)
-    to_user = models.ForeignKey(KnownIdentity, on_delete=models.DO_NOTHING, related_name='friend_requests_incoming')
+    secret = models.CharField(max_length=255)
+    befriender_username = models.CharField(max_length=255)
+    befriender_domain = models.CharField(max_length=255)
+    befriender_public_key = models.CharField(max_length=255)
+    befriendee_user = models.ForeignKey(ToolshedUser, on_delete=models.DO_NOTHING, related_name='friend_requests_incoming')
     created_at = models.DateTimeField(auto_now_add=True)

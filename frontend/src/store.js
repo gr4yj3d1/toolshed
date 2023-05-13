@@ -67,6 +67,11 @@ export default createStore({
                 } else {
                 }
                 router.push('/');
+                /*if (this.$route.query.redirect) {
+                    router.push({path: this.$route.query.redirect});
+                } else {
+                    router.push({path: '/'});
+                }*/
             }
         }
     },
@@ -109,10 +114,10 @@ export default createStore({
             if (state.unreachable_neighbors.queryUnreachable(host)) {
                 throw new Error('unreachable neighbor')
             }
-            if(!state.user || !state.keypair) {
+            if (!state.user || !state.keypair) {
                 throw new Error('no user or keypair')
             }
-            const url = host + target
+            const url = "http://" + host + target // TODO https
             const signature = nacl.crypto_sign_detached(nacl.encode_utf8(url), state.keypair.signSk)
             const auth = 'Signature ' + state.user + ':' + nacl.to_hex(signature)
             return await fetch(url, {
@@ -124,13 +129,14 @@ export default createStore({
             ).then(response => response.json())
         },
         async apiFederatedPost({state}, {host, target, data}) {
+            console.log('apiFederatedPost', host, target, data)
             if (state.unreachable_neighbors.queryUnreachable(host)) {
                 throw new Error('unreachable neighbor')
             }
-            if(!state.user || !state.keypair) {
+            if (!state.user || !state.keypair) {
                 throw new Error('no user or keypair')
             }
-            const url = host + target
+            const url = "http://" + host + target // TODO https
             const json = JSON.stringify(data)
             const signature = nacl.crypto_sign_detached(nacl.encode_utf8(url + json), state.keypair.signSk)
             const auth = 'Signature ' + state.user + ':' + nacl.to_hex(signature)
@@ -163,6 +169,20 @@ export default createStore({
                 credentials: 'omit',
                 body: JSON.stringify(data)
             }).then(response => response.json())
+        },
+        async requestFriend({state, dispatch}, {username}) {
+            console.log('requesting friend ' + username)
+            if(username in state.friends) {
+                return true;
+            }
+            const server = await dispatch('getFriendServer', {username})
+            const data = await dispatch('apiFederatedPost', {
+                host: server[0],
+                target: '/api/friendrequests/',
+                data: {befriender: state.user, befriendee: username, befriender_key: nacl.to_hex(state.keypair.signPk)}
+            })
+            console.log(data)
+            return true;
         }
     },
     getters: {

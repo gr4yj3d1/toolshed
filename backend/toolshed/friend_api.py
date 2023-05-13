@@ -1,15 +1,17 @@
+import secrets
+
 from django.urls import path
 from rest_framework import serializers, status
-from rest_framework.authentication import TokenAuthentication, BasicAuthentication
 from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSetMixin
 
 from authentication.models import KnownIdentity, FriendRequestIncoming, FriendRequestOutgoing
-from toolshed.auth import SignatureAuthentication
+from toolshed.auth import verify_incoming_friend_request, split_userhandle_or_throw, \
+    authenticate_request_against_local_users
+from authentication.models import ToolshedUser
 
 
 # TODO this entire file doesn't do anything, even though it might look like it does.
@@ -73,7 +75,6 @@ def declineFriendRequest(request, pk, format=None):  # /api/friends/<id>/
 class FriendsRequests(APIView, ViewSetMixin):
     # authentication_classes = [SignatureAuthentication, TokenAuthentication, BasicAuthentication]
     # permission_classes = [IsAuthenticated]
-
     def get(self, request, format=None):  # /api/friendrequests/
         user = request.user
         if user.is_authenticated:
@@ -84,17 +85,32 @@ class FriendsRequests(APIView, ViewSetMixin):
         return Response(serializer.data)
 
     def post(self, request, format=None):  # /api/friendrequests/
-        user = request.user
-        if user.is_authenticated:
-            friend = get_object_or_404(user.friends_requests.all(), pk=request.data['friend'])
-            user.friends.add(friend)
-            user.save()
+        raw_request = request.body.decode('utf-8')
+        print(request.data)
+        befriender_username, befriender_domain = split_userhandle_or_throw(request.data['befriender'])
+        befriendee_username, befriendee_domain = split_userhandle_or_throw(request.data['befriendee'])
+        print(befriender_username, befriender_domain, befriendee_username, befriendee_domain)
+        if user := authenticate_request_against_local_users(request, raw_request):
+            secret = secrets.token_hex(64)
+            FriendRequestOutgoing.objects.create(
+                befriender=user,
+                befriendee_username=befriendee_username,
+                befriendee_domain=befriendee_domain,
+                secret=secret,
+            )
+            Response(status=status.HTTP_201_CREATED, data={'secret': secret})
+        elif verify_incoming_friend_request(request, raw_request):
+            befriendee = ToolshedUser.objects.get(username=befriendee_username, domain=befriendee_domain)
+            FriendRequestIncoming.objects.create(
+                befriender_username=befriender_username,
+                befriender_domain=befriender_domain,
+                befriender_public_key=request.data['befriender_key'],
+                befriendee=befriendee,
+                secret=request.data['secret']
+            )
+            return Response(status=status.HTTP_201_CREATED)
         else:
-            friend = get_object_or_404(FriendRequestIncoming.objects.all(), pk=request.data['friend'])
-            friend.accepted = True
-            friend.save()
-        serializer = FriendSerializer(friend)
-        return Response(serializer.data)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['DELETE'])

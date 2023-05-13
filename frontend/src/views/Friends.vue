@@ -15,28 +15,44 @@
                                 <tr>
                                     <th style="width:40%;">Name</th>
                                     <th class="d-none d-md-table-cell" style="width:25%">Server</th>
-                                    <th>Actions</th>
+                                    <th>
+                                        <a @click="fetchFriends" class="align-middle">
+                                            <b-icon-arrow-clockwise></b-icon-arrow-clockwise>
+                                            Refresh
+                                        </a>
+                                        <a @click="showNewFriend" class="align-middle">
+                                            <b-icon-plus></b-icon-plus>
+                                            Add Friend
+                                        </a>
+                                    </th>
                                 </tr>
                                 </thead>
                                 <tbody>
+                                <tr v-if="show_newfriend">
+                                    <td colspan="2">
+                                        <input type="text" class="form-control" placeholder="user@domain"
+                                               v-model="newfriend">
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary" @click="tryRequestFriend">Send Request</button>
+                                    </td>
+                                </tr>
                                 <tr v-for="friend in friendslist" :key="friend.name">
                                     <td>{{ friend.name }}</td>
                                     <td class="d-none d-md-table-cell">{{ friend.server.join(', ') }}</td>
                                     <td class="table-action">
-                                        <a href="#">
+                                        <a href="#" class="align-middle">
                                             <b-icon-pencil-square></b-icon-pencil-square>
+                                            Edit
                                         </a>
-                                        <a href="#">
+                                        <a href="#" class="align-middle">
                                             <b-icon-trash></b-icon-trash>
+                                            Delete
                                         </a>
                                     </td>
                                 </tr>
                                 </tbody>
                             </table>
-                        </div>
-                        <div class="card">
-                            <button class="btn" @click="fetchFriends">Refresh</button>
-                            <router-link to="/inventory/new" class="btn btn-primary">Add</router-link>
                         </div>
                     </div>
                 </div>
@@ -59,6 +75,8 @@ export default {
     data() {
         return {
             friends: {},
+            show_newfriend: false,
+            newfriend: ""
         }
     },
     computed: {
@@ -75,7 +93,7 @@ export default {
         }
     },
     methods: {
-        ...mapActions(['getFriends', "getFriendServer"]),
+        ...mapActions(['getFriends', "getFriendServer", "requestFriend"]),
         fetchFriends() {
             this.getFriends().then((friends) => {
                 friends.map((friend) => {
@@ -84,6 +102,18 @@ export default {
                     })
                 })
             })
+        },
+        showNewFriend() {
+            this.show_newfriend = true
+        },
+        tryRequestFriend() {
+            this.requestFriend({username: this.newfriend}).then((ok) => {
+                if (ok) {
+                    this.show_newfriend = false
+                    this.newfriend = ""
+                    this.fetchFriends()
+                }
+            }).catch(() => {})
         }
     },
     mounted() {

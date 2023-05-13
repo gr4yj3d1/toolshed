@@ -59,40 +59,6 @@ class LendingPeriod(models.Model):
         return self.name
 
 
-#class Event(models.Model):
-#    name = models.CharField(max_length=255)
-#    description = models.TextField()
-#    location = models.CharField(max_length=255)
-#    date = models.DateField()
-#    time = models.TimeField()
-#    # host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
-#    host_username = models.CharField(max_length=255)
-#    host_domain = models.CharField(max_length=255)
-#
-#    def __str__(self):
-#        return self.name
-
-
-class Transaction(models.Model):
-    STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('accepted', 'Accepted'),
-        ('rejected', 'Rejected'),
-    )
-
-    item_requested = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='requested_transactions')
-    item_offered = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='offered_transactions')
-    requester = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='requested_transactions')
-    offerer = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='offered_transactions')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    message = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.requester} requests {self.item_requested} from {self.offerer} in exchange for {self.item_offered}"
-
-
 class Message(models.Model):
     sender = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='sent_messages')
     recipient = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='received_messages')

@@ -19,6 +19,7 @@ class FallBackResolver {
                 endpoints: this._servers,
             }
         )
+        if(result.answers.length === 0) throw new Error('No answer');
         const first = result.answers[0];
         this._cache[key] = {time: Date.now(), ...first}; // TODO hadle multiple answers
         localStorage.setItem('dns-cache', JSON.stringify(this._cache));
