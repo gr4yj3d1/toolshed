@@ -14,6 +14,7 @@ export default createStore({
         item_map: {},
         //notifications: [],
         messages: [],
+        home_server: null,
         resolver: new FallBackResolver(),
         unreachable_neighbors: new NeighborsCache(),
     },
@@ -95,7 +96,7 @@ export default createStore({
             }
         },
         async getFriends(state) {
-            return ['jedi@j3d1.de', 'foobar@example.com', 'foobaz@example.eleon'];
+            return ['jedi@j3d1.de', 'foobar@example.com', 'foobaz@example.eleon', 'alice@example2.com'];
         },
         async getFriendServer({state}, {username}) {
             const domain = username.split('@')[1]
@@ -105,6 +106,10 @@ export default createStore({
                 return ['127.0.0.1:8000'];
             if (domain === 'example.com')
                 return ['10.23.42.128:8000'];
+            if (domain === 'example.jedi')
+                return ['10.23.42.128:8000'];
+            if (domain === 'example2.com')
+                return ['10.23.42.128:9000'];
             const request = '_toolshed-server._tcp.' + domain + '.'
             return await state.resolver.query(request, 'SRV').then(
                 (result) => result.map(
@@ -172,16 +177,31 @@ export default createStore({
         },
         async requestFriend({state, dispatch}, {username}) {
             console.log('requesting friend ' + username)
-            if(username in state.friends) {
+            if (username in state.friends) {
                 return true;
             }
-            const server = await dispatch('getFriendServer', {username})
-            const data = await dispatch('apiFederatedPost', {
-                host: server[0],
+            state.home_server = 'localhost:8000'
+            const home_reply = await dispatch('apiFederatedPost', {
+                host: state.home_server,
                 target: '/api/friendrequests/',
-                data: {befriender: state.user, befriendee: username, befriender_key: nacl.to_hex(state.keypair.signPk)}
+                data: {befriender: state.user, befriendee: username}
             })
-            console.log(data)
+            if (home_reply.status !== 'pending' || !home_reply.secret)
+                return false;
+
+            console.log('home_reply', home_reply)
+            const befriendee_server = await dispatch('getFriendServer', {username})
+            const ext_reply = await dispatch('apiFederatedPost', {
+                host: befriendee_server[0],
+                target: '/api/friendrequests/',
+                data: {
+                    befriender: state.user,
+                    befriendee: username,
+                    befriender_key: nacl.to_hex(state.keypair.signPk),
+                    secret: home_reply.secret
+                }
+            })
+            console.log('ext_reply', ext_reply)
             return true;
         }
     },
