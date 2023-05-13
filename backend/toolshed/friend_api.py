@@ -122,7 +122,7 @@ class FriendsRequests(APIView, ViewSetMixin):
                         befriender_username=befriender_username,
                         befriender_domain=befriender_domain,
                         befriender_public_key=request.data['befriender_key'],
-                        befriendee=befriendee,
+                        befriendee_user=befriendee,
                         secret=request.data['secret']
                     )
                     return Response(status=status.HTTP_201_CREATED, data={'status': "pending"})
