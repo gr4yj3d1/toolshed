@@ -139,7 +139,7 @@ def authenticate_request_against_local_users(request, raw_request):
     try:
         author_user = ToolshedUser.objects.get(username=username, domain=domain)
         verify_key = VerifyKey(bytes.fromhex(author_user.public_identity.public_key))
-    except KnownIdentity.DoesNotExist:
+    except ToolshedUser.DoesNotExist:
         author_user = None
         verify_key = dummy_key.verify_key
 

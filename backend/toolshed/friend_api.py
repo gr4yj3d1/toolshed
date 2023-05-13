@@ -99,7 +99,7 @@ class FriendsRequests(APIView, ViewSetMixin):
                 befriendee_domain=befriendee_domain,
                 secret=secret,
             )
-            return  Response(status=status.HTTP_201_CREATED, data={'secret': secret, 'status': "pending"})
+            return Response(status=status.HTTP_201_CREATED, data={'secret': secret, 'status': "pending"})
         elif verify_incoming_friend_request(request, raw_request):
             befriendee = ToolshedUser.objects.get(username=befriendee_username, domain=befriendee_domain)
             outgoing = FriendRequestOutgoing.objects.filter(
