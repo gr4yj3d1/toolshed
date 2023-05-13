@@ -13,10 +13,10 @@
                             <table class="table table-striped">
                                 <thead>
                                 <tr>
-                                    <th style="width:40%;">Name</th>
+                                    <th>Name</th>
                                     <th class="d-none d-md-table-cell" style="width:25%">Server</th>
-                                    <th>
-                                        <a @click="fetchFriends" class="align-middle">
+                                    <th style="width: 16em">
+                                        <a @click="fetchContent" class="align-middle">
                                             <b-icon-arrow-clockwise></b-icon-arrow-clockwise>
                                             Refresh
                                         </a>
@@ -55,6 +55,45 @@
                             </table>
                         </div>
                     </div>
+                    <div class="col-12 col-xl-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">Requests</h5>
+                                <h6 class="card-subtitle text-muted">Bar <code>baz</code>.</h6>
+                            </div>
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th class="d-none d-md-table-cell" style="width:25%">Key</th>
+                                    <th style="width: 16em">
+                                        <a @click="fetchContent" class="align-middle">
+                                            <b-icon-arrow-clockwise></b-icon-arrow-clockwise>
+                                            Refresh
+                                        </a>
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="request in requests" :key="request.befriender">
+                                    <td>{{ request.befriender }}</td>
+                                    <td class="d-none d-md-table-cell">
+                                        {{ request.befriender_public_key.slice(0,32) }}...</td>
+                                    <td class="table-action">
+                                        <button class="btn btn-sm btn-success" @click="tryAcceptFriend(request.befriender)">
+                                            <b-icon-check></b-icon-check>
+                                            Accept
+                                        </button> &nbsp;
+                                        <button class="btn btn-sm btn-danger" @click="tryRejectFriend(request.befriender)">
+                                            <b-icon-x></b-icon-x>
+                                            Decline
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -76,7 +115,8 @@ export default {
         return {
             friends: {},
             show_newfriend: false,
-            newfriend: ""
+            newfriend: "",
+            requests: []
         }
     },
     computed: {
@@ -93,14 +133,17 @@ export default {
         }
     },
     methods: {
-        ...mapActions(['getFriends', "getFriendServer", "requestFriend"]),
-        fetchFriends() {
+        ...mapActions(['getFriends', "getFriendServer", "requestFriend", "acceptFriend", "fetchFriendRequests", "declineFriend"]),
+        fetchContent() {
             this.getFriends().then((friends) => {
                 friends.map((friend) => {
                     this.getFriendServer({username: friend}).then((server) => {
                         this.friends[friend] = server
                     })
                 })
+            })
+            this.fetchFriendRequests().then((requests) => {
+                this.requests = requests
             })
         },
         showNewFriend() {
@@ -111,13 +154,27 @@ export default {
                 if (ok) {
                     this.show_newfriend = false
                     this.newfriend = ""
-                    this.fetchFriends()
+                    this.fetchContent()
+                }
+            }).catch(() => {})
+        },
+        tryAcceptFriend(friend) {
+            this.acceptFriend({username: friend}).then((ok) => {
+                if (ok) {
+                    this.fetchContent()
+                }
+            }).catch(() => {})
+        },
+        tryRejectFriend(friend) {
+            this.declineFriend({username: friend}).then((ok) => {
+                if (ok) {
+                    this.fetchContent()
                 }
             }).catch(() => {})
         }
     },
     mounted() {
-        this.fetchFriends()
+        this.fetchContent()
     }
 }
 </script>

@@ -203,6 +203,16 @@ export default createStore({
             })
             console.log('ext_reply', ext_reply)
             return true;
+        },
+        async acceptFriend({state, dispatch}, args) {
+            console.log('accepting friend ' + args)
+        },
+        async declineFriend({state, dispatch}, args) {
+            console.log('declining friend ' + args)
+        },
+        async fetchFriendRequests({state, dispatch}) {
+            const requests = await dispatch('apiLocalGet', {target: '/api/friendrequests/'})
+            return requests
         }
     },
     getters: {

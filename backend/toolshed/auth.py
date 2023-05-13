@@ -41,8 +41,11 @@ def verify_incoming_friend_request(request, raw_request):
     elif request.method == 'PATCH':
         signed_data += raw_request
 
-    befriender = request.data['befriender']
-    befriender_key = request.data['befriender_key']
+    try:
+        befriender = request.data['befriender']
+        befriender_key = request.data['befriender_key']
+    except KeyError:
+        return False
 
     if not befriender or not befriender_key:
         return False

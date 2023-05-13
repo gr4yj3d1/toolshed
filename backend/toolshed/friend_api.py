@@ -40,9 +40,14 @@ class FriendSerializer(serializers.ModelSerializer):
 
 
 class FriendRequestSerializer(serializers.ModelSerializer):
+    befriender = serializers.SerializerMethodField()
+
+    def get_befriender(self, obj):
+        return obj.befriender_username + '@' + obj.befriender_domain
+
     class Meta:
-        model = KnownIdentity
-        fields = ['from_identity', 'to_identity']
+        model = FriendRequestIncoming
+        fields = ['befriender', 'befriender_public_key', 'secret']
 
 
 class Friends(APIView, ViewSetMixin):
@@ -84,7 +89,7 @@ class FriendsRequests(APIView, ViewSetMixin):
             friends_requests = user.friends_requests.all()
         else:
             friends_requests = FriendRequestIncoming.objects.all()
-        serializer = FriendSerializer(friends_requests, many=True)
+        serializer = FriendRequestSerializer(friends_requests, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):  # /api/friendrequests/
@@ -127,6 +132,8 @@ class FriendsRequests(APIView, ViewSetMixin):
                     )
                     return Response(status=status.HTTP_201_CREATED, data={'status': "pending"})
             except ToolshedUser.DoesNotExist:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            except KeyError:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
