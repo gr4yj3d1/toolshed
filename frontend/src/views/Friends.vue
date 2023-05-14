@@ -80,11 +80,11 @@
                                     <td class="d-none d-md-table-cell">
                                         {{ request.befriender_public_key.slice(0,32) }}...</td>
                                     <td class="table-action">
-                                        <button class="btn btn-sm btn-success" @click="tryAcceptFriend(request.befriender)">
+                                        <button class="btn btn-sm btn-success" @click="tryAcceptFriend(request)">
                                             <b-icon-check></b-icon-check>
                                             Accept
                                         </button> &nbsp;
-                                        <button class="btn btn-sm btn-danger" @click="tryRejectFriend(request.befriender)">
+                                        <button class="btn btn-sm btn-danger" @click="tryRejectFriend(request)">
                                             <b-icon-x></b-icon-x>
                                             Decline
                                         </button>
@@ -158,8 +158,8 @@ export default {
                 }
             }).catch(() => {})
         },
-        tryAcceptFriend(friend) {
-            this.acceptFriend({username: friend}).then((ok) => {
+        tryAcceptFriend(request) {
+            this.acceptFriend({id: request.id, secret: request.secret}).then((ok) => {
                 if (ok) {
                     this.fetchContent()
                 }

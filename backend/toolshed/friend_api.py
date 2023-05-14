@@ -47,7 +47,7 @@ class FriendRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FriendRequestIncoming
-        fields = ['befriender', 'befriender_public_key', 'secret']
+        fields = ['befriender', 'befriender_public_key', 'secret', 'id']
 
 
 class Friends(APIView, ViewSetMixin):
@@ -62,15 +62,22 @@ class Friends(APIView, ViewSetMixin):
 
     def post(self, request, format=None):  # /api/friends/
         # only for local users
-        user = request.user
-        incomingrequest = FriendRequestIncoming.objects.get(pk=request.data.get('friend_request_id'))
-        befriender = KnownIdentity.objects.create(
-            username=incomingrequest.befriender_username,
-            domain=incomingrequest.befriender_domain,
-            public_key=incomingrequest.befriender_public_key
-        )
-        ToolshedUser.objects.get(user=user).friends.add(befriender)
-        return Response(status=status.HTTP_201_CREATED, data={'status': 'accepted'})
+        try:
+            user = request.user
+            incomingrequest = FriendRequestIncoming.objects.get(
+                pk=request.data.get('friend_request_id'),
+                secret=request.data.get('secret'))
+            befriender, _ = KnownIdentity.objects.get_or_create(
+                username=incomingrequest.befriender_username,
+                domain=incomingrequest.befriender_domain,
+                public_key=incomingrequest.befriender_public_key
+            )
+            user.user.get().friends.add(befriender)
+            user.user.get().save()
+            incomingrequest.delete()
+            return Response(status=status.HTTP_201_CREATED, data={'status': 'accepted'})
+        except FriendRequestIncoming.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND, data={'status': 'not found'})
 
 
 @api_view(['DELETE'])

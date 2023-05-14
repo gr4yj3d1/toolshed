@@ -2,6 +2,7 @@ import {createStore} from 'vuex';
 import router from '@/router';
 import FallBackResolver from "@/dns";
 import NeighborsCache from "@/neigbors";
+import {useRoute} from "vue-router";
 
 
 export default createStore({
@@ -45,6 +46,9 @@ export default createStore({
         },
         setInventoryItems(state, {url, items}) {
             state.item_map[url] = items;
+        },
+        setFriends(state, friends) {
+            state.friends = friends;
         },
         logout(state) {
             state.user = null;
@@ -95,8 +99,15 @@ export default createStore({
                 return false;
             }
         },
-        async getFriends(state) {
-            return ['jedi@j3d1.de', 'foobar@example.com', 'foobaz@example.eleon', 'alice@example2.com'];
+        async getFriends({commit, dispatch, state}) {
+            const home_server = "localhost:8000"
+            const data = await dispatch('apiFederatedGet', {
+                host: home_server,
+                target: '/api/friends/'
+            })
+            console.log('getFriends', data)
+            commit('setFriends', data)
+            return data
         },
         async getFriendServer({state}, {username}) {
             const domain = username.split('@')[1]
@@ -204,8 +215,30 @@ export default createStore({
             console.log('ext_reply', ext_reply)
             return true;
         },
-        async acceptFriend({state, dispatch}, args) {
-            console.log('accepting friend ' + args)
+        async acceptFriend({state, dispatch}, {id, secret}) {
+            console.log('accepting friend ' + id)
+            state.home_server = 'localhost:8000'
+            const home_reply = await dispatch('apiFederatedPost', {
+                host: state.home_server,
+                target: '/api/friends/',
+                data: {
+                    friend_request_id: id, secret: secret
+                }
+            })
+            console.log('home_reply', home_reply)
+            const ext_serqver = await dispatch('getFriendServer', {username: home_reply.befriender})
+            const ext_reply = await dispatch('apiFederatedPost', {
+                host: ext_serqver[0],
+                target: '/api/friendrequests/',
+                data: {
+                    befriender: state.user,
+                    befriendee: username,
+                    befriender_key: nacl.to_hex(state.keypair.signPk),
+                    secret: home_reply.secret
+                }
+            })
+            console.log('ext_reply', ext_reply)
+            return true
         },
         async declineFriend({state, dispatch}, args) {
             console.log('declining friend ' + args)
