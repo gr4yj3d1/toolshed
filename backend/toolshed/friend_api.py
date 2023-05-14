@@ -34,9 +34,14 @@ from authentication.models import ToolshedUser
 
 
 class FriendSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+
+    def get_username(self, obj):
+        return obj.username + '@' + obj.domain
+
     class Meta:
         model = KnownIdentity
-        fields = ['username', 'domain']
+        fields = ['username', 'public_key']
 
 
 class FriendRequestSerializer(serializers.ModelSerializer):
@@ -56,7 +61,7 @@ class Friends(APIView, ViewSetMixin):
 
     def get(self, request, format=None):  # /api/friends/ # TODO what should this do?
         user = request.user
-        friends = user.friends.all()
+        friends = user.user.get().friends.all()
         serializer = FriendSerializer(friends, many=True)
         return Response(serializer.data)
 

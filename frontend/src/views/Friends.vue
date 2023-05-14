@@ -38,7 +38,7 @@
                                     </td>
                                 </tr>
                                 <tr v-for="friend in friendslist" :key="friend.name">
-                                    <td>{{ friend.name }}</td>
+                                    <td>{{ friend.username }}</td>
                                     <td class="d-none d-md-table-cell">{{ friend.server.join(', ') }}</td>
                                     <td class="table-action">
                                         <a href="#" class="align-middle">
@@ -124,12 +124,7 @@ export default {
             return this.$route.params.username
         },
         friendslist() {
-            return Object.keys(this.friends).map((friend) => {
-                return {
-                    name: friend,
-                    server: this.friends[friend]
-                }
-            })
+            return Object.entries(this.friends).map(([_, friend]) => friend)
         }
     },
     methods: {
@@ -137,8 +132,8 @@ export default {
         fetchContent() {
             this.getFriends().then((friends) => {
                 friends.map((friend) => {
-                    this.getFriendServer({username: friend}).then((server) => {
-                        this.friends[friend] = server
+                    this.getFriendServer(friend).then((server) => {
+                        this.friends[friend.username] = {...friend, server: server}
                     })
                 })
             })
@@ -159,7 +154,7 @@ export default {
             }).catch(() => {})
         },
         tryAcceptFriend(request) {
-            this.acceptFriend({id: request.id, secret: request.secret}).then((ok) => {
+            this.acceptFriend({id: request.id, secret: request.secret, befriender: request.befriender}).then((ok) => {
                 if (ok) {
                     this.fetchContent()
                 }
