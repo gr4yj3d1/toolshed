@@ -128,7 +128,7 @@ class FriendsRequests(APIView, ViewSetMixin):
                     befriendee_username=befriender_username,
                     befriendee_domain=befriender_domain)
                 if outgoing.exists():
-                    befriender = KnownIdentity.objects.get_or_create(
+                    befriender, _ = KnownIdentity.objects.get_or_create(
                         username=befriender_username,
                         domain=befriender_domain,
                         public_key=request.data['befriender_key']
