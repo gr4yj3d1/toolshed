@@ -215,7 +215,7 @@ export default createStore({
             console.log('ext_reply', ext_reply)
             return true;
         },
-        async acceptFriend({state, dispatch}, {id, secret}) {
+        async acceptFriend({state, dispatch}, {id, secret, befriender}) {
             console.log('accepting friend ' + id)
             state.home_server = 'localhost:8000'
             const home_reply = await dispatch('apiFederatedPost', {
@@ -226,15 +226,15 @@ export default createStore({
                 }
             })
             console.log('home_reply', home_reply)
-            const ext_serqver = await dispatch('getFriendServer', {username: home_reply.befriender})
+            const ext_server = await dispatch('getFriendServer', {username: befriender})
             const ext_reply = await dispatch('apiFederatedPost', {
-                host: ext_serqver[0],
+                host: ext_server[0],
                 target: '/api/friendrequests/',
                 data: {
                     befriender: state.user,
-                    befriendee: username,
+                    befriendee: befriender,
                     befriender_key: nacl.to_hex(state.keypair.signPk),
-                    secret: home_reply.secret
+                    secret: secret
                 }
             })
             console.log('ext_reply', ext_reply)

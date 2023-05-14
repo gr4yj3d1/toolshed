@@ -64,17 +64,23 @@ class Friends(APIView, ViewSetMixin):
         # only for local users
         try:
             user = request.user
-            incomingrequest = FriendRequestIncoming.objects.get(
+            incoming_request = FriendRequestIncoming.objects.get(
                 pk=request.data.get('friend_request_id'),
                 secret=request.data.get('secret'))
             befriender, _ = KnownIdentity.objects.get_or_create(
-                username=incomingrequest.befriender_username,
-                domain=incomingrequest.befriender_domain,
-                public_key=incomingrequest.befriender_public_key
+                username=incoming_request.befriender_username,
+                domain=incoming_request.befriender_domain,
+                public_key=incoming_request.befriender_public_key
             )
+            befriender.save()
             user.user.get().friends.add(befriender)
             user.user.get().save()
-            incomingrequest.delete()
+            incoming_request.delete()
+            print(user)
+            print(user.user)
+            print(user.user.get())
+            print(user.user.get().friends)
+            print(user.user.get().friends.all())
             return Response(status=status.HTTP_201_CREATED, data={'status': 'accepted'})
         except FriendRequestIncoming.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND, data={'status': 'not found'})
@@ -122,12 +128,14 @@ class FriendsRequests(APIView, ViewSetMixin):
                     befriendee_username=befriender_username,
                     befriendee_domain=befriender_domain)
                 if outgoing.exists():
-                    befriender = KnownIdentity.objects.create(
+                    befriender = KnownIdentity.objects.get_or_create(
                         username=befriender_username,
                         domain=befriender_domain,
                         public_key=request.data['befriender_key']
                     )
+                    befriender.save()
                     befriendee.friends.add(befriender)
+                    befriendee.save()
                     return Response(status=status.HTTP_201_CREATED, data={'status': "accepted"})
                 else:
                     FriendRequestIncoming.objects.create(
