@@ -78,7 +78,8 @@
                                 <tr v-for="request in requests" :key="request.befriender">
                                     <td>{{ request.befriender }}</td>
                                     <td class="d-none d-md-table-cell">
-                                        {{ request.befriender_public_key.slice(0,32) }}...</td>
+                                        {{ request.befriender_public_key.slice(0, 32) }}...
+                                    </td>
                                     <td class="table-action">
                                         <button class="btn btn-sm btn-success" @click="tryAcceptFriend(request)">
                                             <b-icon-check></b-icon-check>
@@ -128,11 +129,11 @@ export default {
         }
     },
     methods: {
-        ...mapActions(['getFriends', "getFriendServer", "requestFriend", "acceptFriend", "fetchFriendRequests", "declineFriend"]),
+        ...mapActions(['fetchFriends', "lookupServer", "requestFriend", "acceptFriend", "fetchFriendRequests", "declineFriend"]),
         fetchContent() {
-            this.getFriends().then((friends) => {
+            this.fetchFriends().then((friends) => {
                 friends.map((friend) => {
-                    this.getFriendServer(friend).then((server) => {
+                    this.lookupServer(friend).then((server) => {
                         this.friends[friend.username] = {...friend, server: server}
                     })
                 })
@@ -151,21 +152,24 @@ export default {
                     this.newfriend = ""
                     this.fetchContent()
                 }
-            }).catch(() => {})
+            }).catch(() => {
+            })
         },
         tryAcceptFriend(request) {
             this.acceptFriend({id: request.id, secret: request.secret, befriender: request.befriender}).then((ok) => {
                 if (ok) {
                     this.fetchContent()
                 }
-            }).catch(() => {})
+            }).catch(() => {
+            })
         },
         tryRejectFriend(friend) {
             this.declineFriend({username: friend}).then((ok) => {
                 if (ok) {
                     this.fetchContent()
                 }
-            }).catch(() => {})
+            }).catch(() => {
+            })
         }
     },
     mounted() {

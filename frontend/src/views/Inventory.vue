@@ -39,7 +39,7 @@
                             </table>
                         </div>
                         <div class="card">
-                            <button class="btn" @click="getInventoryItems">Refresh</button>
+                            <button class="btn" @click="fetchInventoryItems">Refresh</button>
                             <router-link to="/inventory/new" class="btn btn-primary">Add</router-link>
                         </div>
                     </div>
@@ -67,25 +67,10 @@ export default {
         }
     },
     methods: {
-        ...mapActions(["apiFederatedGet", "getFriends", "getFriendServer"]),
-        ...mapMutations(["setInventoryItems"]),
-        async getInventoryItems() {
-            try {
-                const servers = await this.getFriends().then(friends => friends.map(friend => this.getFriendServer({username: friend})))
-                const urls = servers.map(server => server.then(s => {
-                    return {host: s, target: "/api/inventory_items/"}
-                }))
-                urls.map(url => url.then(u => this.apiFederatedGet(u).then(items => {
-                    this.setInventoryItems({url: u.domain, items})
-                }).catch(e => {
-                }))) // TODO: handle error
-            } catch (e) {
-                console.error(e)
-            }
-        },
+        ...mapActions(["fetchInventoryItems"]),
     },
     async mounted() {
-        await this.getInventoryItems()
+        await this.fetchInventoryItems()
     }
 }
 </script>

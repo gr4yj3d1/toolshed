@@ -2,7 +2,7 @@ import {createStore} from 'vuex';
 import router from '@/router';
 import FallBackResolver from "@/dns";
 import NeighborsCache from "@/neigbors";
-import {useRoute} from "vue-router";
+import {createSignAuth, createTokenAuth, ServerSet} from "@/federation";
 
 
 export default createStore({
@@ -15,7 +15,8 @@ export default createStore({
         item_map: {},
         //notifications: [],
         messages: [],
-        home_server: null,
+        home_servers: null,
+        all_friends_servers: null,
         resolver: new FallBackResolver(),
         unreachable_neighbors: new NeighborsCache(),
     },
@@ -45,10 +46,19 @@ export default createStore({
             localStorage.setItem('remember', remember);
         },
         setInventoryItems(state, {url, items}) {
+            console.log('setInventoryItems', url, items)
             state.item_map[url] = items;
         },
         setFriends(state, friends) {
             state.friends = friends;
+        },
+        setHomeServers(state, home_servers) {
+            console.log('setHomeServer', home_servers)
+            state.home_servers = home_servers;
+        },
+        setAllFriendsServers(state, servers) {
+            console.log('setAllFriendsServers', servers)
+            state.all_friends_servers = servers;
         },
         logout(state) {
             state.user = null;
@@ -72,6 +82,7 @@ export default createStore({
                 } else {
                 }
                 router.push('/');
+
                 /*if (this.$route.query.redirect) {
                     router.push({path: this.$route.query.redirect});
                 } else {
@@ -83,33 +94,30 @@ export default createStore({
     actions: {
         async login({commit, dispatch, state}, {username, password, remember}) {
             commit('setRemember', remember);
-            const data = await dispatch('apiLocalPost', {
-                target: '/auth/token/', data: {
-                    username: username, password: password
-                }
-            })
+            const data = await fetch('/auth/token/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: username, password: password}),
+                credentials: 'omit'
+            }).then(r => r.json())
             if (data.token) {
                 commit('setToken', data.token);
                 commit('setUser', username);
-                const j = await dispatch('apiLocalGet', {target: '/auth/keys/'})
+                const j = await fetch('/auth/keys/', {
+                    method: 'GET',
+                    headers: {'Authorization': 'Token ' + data.token},
+                    credentials: 'omit'
+                }).then(r => r.json())
                 const k = j.key
                 commit('setKey', k)
+                const s = await dispatch('lookupServer', {username}).then(servers => new ServerSet(servers, state.unreachable_neighbors))
+                commit('setHomeServers', s)
                 return true;
             } else {
                 return false;
             }
         },
-        async getFriends({commit, dispatch, state}) {
-            const home_server = "localhost:8000"
-            const data = await dispatch('apiFederatedGet', {
-                host: home_server,
-                target: '/api/friends/'
-            })
-            console.log('getFriends', data)
-            commit('setFriends', data)
-            return data
-        },
-        async getFriendServer({state}, {username}) {
+        async lookupServer({state}, {username}) {
             const domain = username.split('@')[1]
             if (domain === 'example.eleon')
                 return ['10.23.42.186:8000'];
@@ -126,7 +134,31 @@ export default createStore({
                 (result) => result.map(
                     (answer) => answer.target + ':' + answer.port))
         },
-        async apiFederatedGet({state}, {host, target}) {
+        async getHomeServers({state, dispatch, commit}) {
+            if (state.home_servers)
+                return state.home_servers
+            const promise = dispatch('lookupServer', {username: state.user}).then(servers => new ServerSet(servers, state.unreachable_neighbors))
+            commit('setHomeServers', promise)
+            return promise
+        },
+        async getAllFriendsServers({state, dispatch, commit}) {
+            if (state.all_friends_servers)
+                return state.all_friends_servers
+            const promise = (async () => {
+                const servers = new ServerSet([], state.unreachable_neighbors)
+                for (const friend of state.friends) {
+                    const s = await dispatch('lookupServer', {username: friend})
+                    servers.add(s)
+                }
+                return servers
+            })()
+            commit('setAllFriendsServers', promise)
+            return promise
+        },
+        async getFriendServers({state, dispatch, commit}, {username}) {
+            return dispatch('lookupServer', {username}).then(servers => new ServerSet(servers, state.unreachable_neighbors))
+        },
+        /*async apiFederatedGet({state}, {host, target}) {
             if (state.unreachable_neighbors.queryUnreachable(host)) {
                 throw new Error('unreachable neighbor')
             }
@@ -185,72 +217,98 @@ export default createStore({
                 credentials: 'omit',
                 body: JSON.stringify(data)
             }).then(response => response.json())
+        },*/
+        async fetchInventoryItems({commit, dispatch, getters}) {
+            const servers = await dispatch('getHomeServers')
+            const items = await servers.get(getters.signAuth, '/api/inventory_items/')
+            commit('setInventoryItems', {url: '/', items})
+            return items
         },
-        async requestFriend({state, dispatch}, {username}) {
+        async searchInventories({state, dispatch, getters}, {query}) {
+            const servers = await dispatch('getAllFriendsServers')
+            return await servers.get(getters.signAuth, '/api/inventory/search/?q=' + query)
+        },
+        /*async searchInventoryItems() {
+            try {
+                const servers = await this.fetchFriends().then(friends => friends.map(friend => this.lookupServer({username: friend.name})))
+                const urls = servers.map(server => server.then(s => {
+                    return {host: s, target: "/api/inventory_items/"}
+                }))
+                urls.map(url => url.then(u => this.apiFederatedGet(u).then(items => {
+                    this.setInventoryItems({url: u.domain, items})
+                }).catch(e => {
+                }))) // TODO: handle error
+            } catch (e) {
+                console.error(e)
+            }
+        },*/
+        async fetchFriends({commit, dispatch, getters, state}) {
+            const servers = await dispatch('getHomeServers')
+            const data = await servers.get(getters.signAuth, '/api/friends/')
+            commit('setFriends', data)
+            return data
+        },
+        async fetchFriendRequests({state, dispatch, getters}) {
+            const servers = await dispatch('getHomeServers')
+            return await servers.get(getters.signAuth, '/api/friendrequests/')
+        },
+        async requestFriend({state, dispatch, getters}, {username}) {
             console.log('requesting friend ' + username)
             if (username in state.friends) {
                 return true;
             }
-            state.home_server = 'localhost:8000'
-            const home_reply = await dispatch('apiFederatedPost', {
-                host: state.home_server,
-                target: '/api/friendrequests/',
-                data: {befriender: state.user, befriendee: username}
+            const home_servers = await dispatch('getHomeServers')
+            const home_reply = home_servers.post(getters.signAuth, '/api/friendrequests/', {
+                befriender: state.user,
+                befriendee: username
             })
             if (home_reply.status !== 'pending' || !home_reply.secret)
                 return false;
 
             console.log('home_reply', home_reply)
-            const befriendee_server = await dispatch('getFriendServer', {username})
-            const ext_reply = await dispatch('apiFederatedPost', {
-                host: befriendee_server[0],
-                target: '/api/friendrequests/',
-                data: {
-                    befriender: state.user,
-                    befriendee: username,
-                    befriender_key: nacl.to_hex(state.keypair.signPk),
-                    secret: home_reply.secret
-                }
+            const befriendee_servers = await dispatch('getFriendServers', {username})
+            const ext_reply = befriendee_servers.post(getters.signAuth, '/api/friendrequests/', {
+                befriender: state.user,
+                befriendee: username,
+                befriender_key: nacl.to_hex(state.keypair.signPk),
+                secret: home_reply.secret
             })
             console.log('ext_reply', ext_reply)
             return true;
         },
-        async acceptFriend({state, dispatch}, {id, secret, befriender}) {
+        async acceptFriend({state, dispatch, getters}, {id, secret, befriender}) {
             console.log('accepting friend ' + id)
-            state.home_server = 'localhost:8000'
-            const home_reply = await dispatch('apiFederatedPost', {
-                host: state.home_server,
-                target: '/api/friends/',
-                data: {
-                    friend_request_id: id, secret: secret
-                }
+            const home_servers = await dispatch('getHomeServers')
+            const home_reply = await home_servers.post(getters.signAuth, '/api/friends/', {
+                friend_request_id: id, secret: secret
             })
             console.log('home_reply', home_reply)
-            const ext_server = await dispatch('getFriendServer', {username: befriender})
-            const ext_reply = await dispatch('apiFederatedPost', {
-                host: ext_server[0],
-                target: '/api/friendrequests/',
-                data: {
-                    befriender: state.user,
-                    befriendee: befriender,
-                    befriender_key: nacl.to_hex(state.keypair.signPk),
-                    secret: secret
-                }
+            const ext_servers = await dispatch('getFriendServers', {username: befriender})
+            const ext_reply = await ext_servers.post(getters.signAuth, '/api/friendrequests/', {
+                befriender: state.user,
+                befriendee: befriender,
+                befriender_key: nacl.to_hex(state.keypair.signPk),
+                secret: secret
             })
             console.log('ext_reply', ext_reply)
             return true
         },
         async declineFriend({state, dispatch}, args) {
+            // TODO implement
             console.log('declining friend ' + args)
         },
-        async fetchFriendRequests({state, dispatch}) {
-            const requests = await dispatch('apiLocalGet', {target: '/api/friendrequests/'})
-            return requests
-        }
     },
     getters: {
         isLoggedIn(state) {
             return state.user !== null && state.token !== null;
+        },
+        signAuth(state) {
+            console.log('signAuth', state.user, state.keypair.signSk)
+            return createSignAuth(state.user, state.keypair.signSk)
+        },
+        tokenAuth(state) {
+            console.log('tokenAuth', state.token)
+            return createTokenAuth(state.token)
         },
         inventory_items(state) {
             return Object.entries(state.item_map).reduce((acc, [url, items]) => {
