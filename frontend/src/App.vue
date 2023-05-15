@@ -15,10 +15,10 @@ import store from '@/store';
 export default {
     name: 'App',
     methods: {
-        ...mapMutations(['init'])
+        ...mapMutations(['init']),
     },
     beforeCreate () {
-        store.commit('init')
+        store.commit('load_local')
     }
 }
 </script>

@@ -7,6 +7,7 @@ import {createSignAuth, createTokenAuth, ServerSet} from "@/federation";
 
 export default createStore({
     state: {
+        local_loaded: false,
         user: null,
         token: null,
         keypair: null,
@@ -69,7 +70,9 @@ export default createStore({
             localStorage.removeItem('keypair');
             router.push('/login');
         },
-        init(state) {
+        load_local(state) {
+            if (state.local_loaded)
+                return;
             const remember = localStorage.getItem('remember');
             const user = localStorage.getItem('user');
             const token = localStorage.getItem('token');
@@ -79,16 +82,9 @@ export default createStore({
                 this.commit('setToken', token);
                 if (keypair) {
                     this.commit('setKey', keypair)
-                } else {
                 }
-                router.push('/');
-
-                /*if (this.$route.query.redirect) {
-                    router.push({path: this.$route.query.redirect});
-                } else {
-                    router.push({path: '/'});
-                }*/
             }
+            state.cache_loaded = true;
         }
     },
     actions: {
@@ -300,6 +296,16 @@ export default createStore({
     },
     getters: {
         isLoggedIn(state) {
+            if (!state.local_loaded) {
+                state.remember = localStorage.getItem('remember') === 'true'
+                state.user = localStorage.getItem('user')
+                state.token = localStorage.getItem('token')
+                const keypair = localStorage.getItem('keypair')
+                if (keypair)
+                    state.keypair = nacl.crypto_sign_keypair_from_seed(nacl.from_hex(keypair))
+                state.local_loaded = true
+            }
+
             return state.user !== null && state.token !== null;
         },
         signAuth(state) {

@@ -11,9 +11,9 @@ import store from './store';
 
 import _nacl from 'js-nacl';
 
-const app = createApp(App).use(router).use(store).use(BootstrapIconsPlugin);
+const app = createApp(App).use(store).use(BootstrapIconsPlugin);
 
 _nacl.instantiate((nacl) => {
     window.nacl = nacl
-    app.mount('#app')
+    app.use(router).mount('#app')
 });

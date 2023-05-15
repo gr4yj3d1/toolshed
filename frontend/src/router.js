@@ -40,6 +40,7 @@ router.beforeEach((to, from) => {
     if (to.meta.requiresAuth && !store.getters.isLoggedIn) {
         // this route requires auth, check if logged in
         // if not, redirect to login page.
+        console.log("Not logged in, redirecting to login page")
         return {
             path: '/login',
             // save the location we were at to come back later
