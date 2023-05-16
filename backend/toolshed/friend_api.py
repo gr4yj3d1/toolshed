@@ -1,7 +1,7 @@
 import secrets
 
 from django.urls import path
-from rest_framework import serializers, status
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +13,7 @@ from authentication.models import KnownIdentity, FriendRequestIncoming, FriendRe
 from toolshed.auth import verify_incoming_friend_request, split_userhandle_or_throw, \
     authenticate_request_against_local_users, SignatureAuthentication
 from authentication.models import ToolshedUser
+from toolshed.serializers import FriendSerializer, FriendRequestSerializer
 
 
 # TODO this entire file doesn't do anything, even though it might look like it does.
@@ -31,28 +32,6 @@ from authentication.models import ToolshedUser
 #       containing x@A's and y@B's identities
 #   2.3. y@B's client sends a POST request to B/api/friends/ containing the id of the FriendRequestIncoming object
 #   2.4. B's backend creates a Friend object, using the identities from the FriendRequestIncoming object
-
-
-class FriendSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField()
-
-    def get_username(self, obj):
-        return obj.username + '@' + obj.domain
-
-    class Meta:
-        model = KnownIdentity
-        fields = ['username', 'public_key']
-
-
-class FriendRequestSerializer(serializers.ModelSerializer):
-    befriender = serializers.SerializerMethodField()
-
-    def get_befriender(self, obj):
-        return obj.befriender_username + '@' + obj.befriender_domain
-
-    class Meta:
-        model = FriendRequestIncoming
-        fields = ['befriender', 'befriender_public_key', 'secret', 'id']
 
 
 class Friends(APIView, ViewSetMixin):
@@ -81,23 +60,9 @@ class Friends(APIView, ViewSetMixin):
             user.user.get().friends.add(befriender)
             user.user.get().save()
             incoming_request.delete()
-            print(user)
-            print(user.user)
-            print(user.user.get())
-            print(user.user.get().friends)
-            print(user.user.get().friends.all())
             return Response(status=status.HTTP_201_CREATED, data={'status': 'accepted'})
         except FriendRequestIncoming.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND, data={'status': 'not found'})
-
-
-@api_view(['DELETE'])
-def declineFriendRequest(request, pk, format=None):  # /api/friends/<id>/
-    user = request.user
-    friend = get_object_or_404(user.friends, pk=pk)
-    user.friends.remove(friend)
-    user.save()
-    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FriendsRequests(APIView, ViewSetMixin):
@@ -157,6 +122,15 @@ class FriendsRequests(APIView, ViewSetMixin):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+def declineFriendRequest(request, pk, format=None):  # /api/friends/<id>/
+    user = request.user
+    friend = get_object_or_404(user.friends, pk=pk)
+    user.friends.remove(friend)
+    user.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['DELETE'])

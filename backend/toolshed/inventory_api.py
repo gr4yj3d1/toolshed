@@ -1,30 +1,12 @@
-from rest_framework import routers, serializers, viewsets
+from rest_framework import routers, viewsets
 from rest_framework.authentication import TokenAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from authentication.models import ToolshedUser
 from toolshed.auth import SignatureAuthentication
 from toolshed.models import InventoryItem
+from toolshed.serializers import InventoryItemSerializer
 
 router = routers.SimpleRouter()
-
-
-class InventoryItemOwnerSerializer(serializers.ReadOnlyField):
-    class Meta:
-        model = ToolshedUser
-        fields = '__all__'
-
-    def to_representation(self, value):
-        # TODO: this is a hack, fix it
-        return value.username + '@' + value.domain
-
-
-class InventoryItemSerializer(serializers.ModelSerializer):
-    owner = InventoryItemOwnerSerializer(read_only=True)
-
-    class Meta:
-        model = InventoryItem
-        fields = '__all__'
 
 
 def inventory_items(identity):
