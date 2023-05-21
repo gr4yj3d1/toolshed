@@ -1,7 +1,7 @@
 <template>
     <form class="d-none d-sm-inline-block">
         <div class="input-group input-group-navbar">
-            <input type="text" class="form-control" placeholder="Search…" aria-label="Search" v-model="query" id="searchText">
+            <input type="text" class="form-control" placeholder="Search…" aria-label="Search" v-model="query" ref="search-text" />
             <button class="btn" type="button" @click.prevent="search">
                 <b-icon-search class="bi-valign-middle"></b-icon-search>
             </button>
@@ -28,7 +28,7 @@ export default {
             if(this.query.length > 0)
                 this.$router.push("/search/" + encodeURIComponent(this.query));
             else
-                document.getElementById("searchText").focus();
+                this.$refs["search-text"].focus();
         }
     },
     mounted() {
