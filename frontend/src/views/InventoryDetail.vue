@@ -4,38 +4,48 @@
             <div class="row">
                 <div class="col">
                     <div class="card">
-                        <div class="card-header">Inventory</div>
+                        <div class="card-header">Edit Item</div>
                         <div class="card-body">
-                            <table class="table table-striped">
-                                <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Quantity</th>
-                                    <th>Owner</th>
-                                    <th>Actions</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr v-for="item in inventory_items" :key="item.id">
-                                    <td>{{ item.name }}</td>
-                                    <td>{{ item.quantity }}</td>
-                                    <td>{{ item.owner }}</td>
-                                    <td>
-                                        <a href="#">
-                                            <b-icon-pencil-square></b-icon-pencil-square>
-                                        </a>
-                                        <a href="#">
-                                            <b-icon-trash></b-icon-trash>
-                                        </a>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
+                            <div class="mb-3">
+                                <span class="badge bg-dark" v-for="(tag, index) in item.tags" :key="index">
+                                    {{ tag }}
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="badge bg-dark" v-for="(property, index) in item.properties" :key="index">
+                                    {{ property.name }}={{ property.value }}
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" name="name"
+                                       placeholder="Enter item name" v-model="item.name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description"
+                                          placeholder="Enter description" v-model="item.description"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity"
+                                       placeholder="Enter quantity" v-model="item.quantity">
+                            </div>
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price</label>
+                                <input type="number" class="form-control" id="price" name="price"
+                                       placeholder="Enter price" v-model="item.price">
+                            </div>
+                            <div class="mb-3">
+                                <label for="image" class="form-label">Image</label>
+                                <input type="text" class="form-control" id="image" name="image"
+                                       placeholder="Enter image" v-model="item.image">
+                            </div>
                         </div>
-                        <div class="card">
-                            <button class="btn" @click="getInventoryItems">Refresh</button>
-                            <router-link to="/inventory/new" class="btn btn-primary">Add</router-link>
-                        </div>
+                        <!--div class="card">
+                            <button type="submit" class="btn btn-primary" @click="updateInventoryItem(item)">Update
+                            </button>
+                        </div-->
                     </div>
                 </div>
             </div>
@@ -46,10 +56,26 @@
 <script>
 import * as BIcons from "bootstrap-icons-vue";
 import BaseLayout from "@/components/BaseLayout.vue";
+import TagField from "@/components/TagField.vue";
+import PropertyField from "@/components/PropertyField.vue";
 
 export default {
     name: "InventoryDetail",
+    data() {
+        return {
+            item: {
+                name: "",
+                description: "",
+                quantity: 0,
+                price: 0,
+                image: "",
+                tags: [],
+                properties: []
+            }
+        }
+    },
     components: {
+        PropertyField, TagField,
         BaseLayout,
         ...BIcons
     },
