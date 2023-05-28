@@ -39,7 +39,7 @@ class ItemProperty(models.Model):
     item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='properties')
 
     def __str__(self):
-        return self.name
+        return self.property.name + ": " + self.value + " (" + self.item.name + ")"
 
 
 class ItemTag(models.Model):
@@ -47,7 +47,7 @@ class ItemTag(models.Model):
     item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='tags')
 
     def __str__(self):
-        return self.name
+        return self.tag.name + " (" + self.item.name + ")"
 
 
 class LendingPeriod(models.Model):
@@ -55,8 +55,8 @@ class LendingPeriod(models.Model):
     end_date = models.DateField()
     item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='lending_periods')
 
-    def __str__(self):
-        return self.name
+#    def __str__(self):
+#        return self.name
 
 
 class Message(models.Model):

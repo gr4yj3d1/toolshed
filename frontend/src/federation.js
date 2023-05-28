@@ -41,6 +41,33 @@ class ServerSet {
         throw new Error('all servers failed')
     }
 
+    async patch(auth, target, data) {
+        if (!auth || typeof auth.buildAuthHeader !== 'function') {
+            throw new Error('no auth')
+        }
+        for (const server of this.servers) {
+            try {
+                if (this.unreachable_neighbors.queryUnreachable(server)) {
+                    continue
+                }
+                const url = "http://" + server + target // TODO https
+                return await fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...auth.buildAuthHeader(url)
+                    },
+                    credentials: 'omit',
+                    body: JSON.stringify(data)
+                }).catch(err => this.unreachable_neighbors.unreachable(server)
+                ).then(response => response.json())
+            } catch (e) {
+                console.error('patch to server failed', server, e)
+            }
+        }
+        throw new Error('all servers failed')
+    }
+
     async get(auth, target) {
         if (!auth || typeof auth.buildAuthHeader !== 'function') {
             throw new Error('no auth')
@@ -61,6 +88,58 @@ class ServerSet {
                 ).then(response => response.json())
             } catch (e) {
                 console.error('get from server failed', server, e)
+            }
+        }
+        throw new Error('all servers failed')
+    }
+
+    async delete(auth, target) {
+        if (!auth || typeof auth.buildAuthHeader !== 'function') {
+            throw new Error('no auth')
+        }
+        for (const server of this.servers) {
+            try {
+                if (this.unreachable_neighbors.queryUnreachable(server)) {
+                    continue
+                }
+                const url = "http://" + server + target // TODO https
+                return await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        ...auth.buildAuthHeader(url)
+                    },
+                    credentials: 'omit'
+                }).catch(err => this.unreachable_neighbors.unreachable(server)
+                ).then(response => response.json())
+            } catch (e) {
+                console.error('delete from server failed', server, e)
+            }
+        }
+        throw new Error('all servers failed')
+    }
+
+    async put(auth, target, data) {
+        if (!auth || typeof auth.buildAuthHeader !== 'function') {
+            throw new Error('no auth')
+        }
+        for (const server of this.servers) {
+            try {
+                if (this.unreachable_neighbors.queryUnreachable(server)) {
+                    continue
+                }
+                const url = "http://" + server + target // TODO https
+                return await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...auth.buildAuthHeader(url)
+                    },
+                    credentials: 'omit',
+                    body: JSON.stringify(data)
+                }).catch(err => this.unreachable_neighbors.unreachable(server)
+                ).then(response => response.json())
+            } catch (e) {
+                console.error('put to server failed', server, e)
             }
         }
         throw new Error('all servers failed')
@@ -102,6 +181,12 @@ function createTokenAuth(token) {
     }, context)
 }
 
-export {ServerSet, createSignAuth, createTokenAuth}
+function createNullAuth() {
+    return new authMethod(() => {
+        return {}
+    }, {})
+}
+
+export {ServerSet, createSignAuth, createTokenAuth, createNullAuth};
 
 

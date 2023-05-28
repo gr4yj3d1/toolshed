@@ -7,6 +7,24 @@
                         <div class="card-header">Create New Item</div>
                         <div class="card-body">
                             <div class="mb-3">
+                                <ul>
+                                    <li v-for="tag in item.tags" :key="tag">
+                                        {{ tag }}
+                                    </li>
+                                </ul>
+                                <label for="tags" class="form-label">Tags</label>
+                                <tag-field :value="item.tags"></tag-field>
+                            </div>
+                            <div class="mb-3">
+                                <ul>
+                                    <li v-for="property in item.properties" :key="property">
+                                        {{ property.name }}: {{ property.value }}
+                                    </li>
+                                </ul>
+                                <label for="property" class="form-label">Property</label>
+                                <property-field :value="item.properties"></property-field>
+                            </div>
+                            <div class="mb-3">
                                 <label for="name" class="form-label">Name</label>
                                 <input type="text" class="form-control" id="name" name="name"
                                        placeholder="Enter item name" v-model="item.name">
@@ -33,7 +51,8 @@
                             </div>
                         </div>
                         <div class="card">
-                            <button type="submit" class="btn btn-primary" @click="createInventoryItem(item)">Add</button>
+                            <button type="submit" class="btn btn-primary" @click="createInventoryItem(item)">Add
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -44,9 +63,10 @@
 
 <script>
 import * as BIcons from "bootstrap-icons-vue";
-import BaseLayout from "@/components/BaseLayout.vue";
-import {createApp} from "vue";
 import {mapActions} from "vuex";
+import BaseLayout from "@/components/BaseLayout.vue";
+import TagField from "@/components/TagField.vue";
+import PropertyField from "@/components/PropertyField.vue";
 
 export default {
     name: "InventoryNew",
@@ -57,17 +77,21 @@ export default {
                 description: "",
                 quantity: 0,
                 price: 0,
-                image: ""
+                image: "",
+                tags: [],
+                properties: []
             }
         }
     },
     components: {
         BaseLayout,
+        TagField,
+        PropertyField,
         ...BIcons
     },
     methods: {
-        ...mapActions(['createInventoryItem']),
-    },
+        ...mapActions(['createInventoryItem'])
+    }
 }
 </script>
 
