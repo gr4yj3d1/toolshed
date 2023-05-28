@@ -3,7 +3,6 @@ import {fileURLToPath, URL} from 'node:url'
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// https://vitejs.dev/config/
 export default defineConfig({
     plugins: [vue()],
     resolve: {
@@ -20,7 +19,10 @@ export default defineConfig({
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token, Authorization, Accept,charset,boundary,Content-Length',
             'Access-Control-Allow-Credentials': 'true',
-            'Content-Security-Policy': 'default-src \'self\' \'unsafe-inline\' \'unsafe-eval\' data: \'self\' connect-src *', // change to https://* for production
+            'Content-Security-Policy': 'default-src \'self\';'
+                + ' script-src \'self\' \'wasm-unsafe-eval\';'
+                + ' style-src \'self\' \'unsafe-inline\';'
+                + ' connect-src * data:', // TODO: change * to https://* for production
         },
         proxy: {
             '^/api/': {

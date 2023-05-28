@@ -4,7 +4,6 @@ import { BootstrapIconsPlugin } from 'bootstrap-icons-vue';
 import App from './App.vue'
 
 import './assets/css/toolshed.css'
-import './assets/js/app.js'
 
 import router from './router'
 import store from './store';

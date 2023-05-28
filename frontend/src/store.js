@@ -175,15 +175,16 @@ export default createStore({
             const servers = await dispatch('getAllFriendsServers')
             return await servers.get(getters.signAuth, '/api/inventory/search/?q=' + query)
         },
-        async createInventoryItem({state, dispatch, getters}, {item}) {
+        async createInventoryItem({state, dispatch, getters}, item) {
             const servers = await dispatch('getHomeServers')
-            return await servers.post(getters.signAuth, '/api/inventory_items/', item)
+            const data = {...item, owned_amount: 1, availability_policy: 'friends', category: 'other'}
+            return await servers.post(getters.signAuth, '/api/inventory_items/', data)
         },
-        async updateInventoryItem({state, dispatch, getters}, {item}) {
+        async updateInventoryItem({state, dispatch, getters}, item) {
             const servers = await dispatch('getHomeServers')
             return await servers.patch(getters.signAuth, '/api/inventory_items/' + item.id + '/', item)
         },
-        async deleteInventoryItem({state, dispatch, getters}, {item}) {
+        async deleteInventoryItem({state, dispatch, getters}, item) {
             const servers = await dispatch('getHomeServers')
             return await servers.delete(getters.signAuth, '/api/inventory_items/' + item.id + '/')
         },

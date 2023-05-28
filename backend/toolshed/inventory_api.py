@@ -21,7 +21,7 @@ def inventory_items(identity):
 
 class InventoryItemViewSet(viewsets.ModelViewSet):
     serializer_class = InventoryItemSerializer
-    authentication_classes = [SignatureAuthentication, TokenAuthentication, BasicAuthentication]
+    authentication_classes = [SignatureAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -30,6 +30,9 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
             return inventory_items(user)
         else:
             return InventoryItem.objects.none()
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user.user.get())
 
 
 router.register(r'inventory_items', InventoryItemViewSet, basename='inventory_items')

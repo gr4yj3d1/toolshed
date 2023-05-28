@@ -48,6 +48,7 @@
 <script>
 import {mapGetters, mapMutations} from 'vuex';
 import * as BIcons from "bootstrap-icons-vue";
+import moment from 'moment';
 
 export default {
     name: 'Notifications',

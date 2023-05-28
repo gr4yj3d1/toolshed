@@ -28,7 +28,7 @@ class ServerSet {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        ...auth.buildAuthHeader(url)
+                        ...auth.buildAuthHeader(url, data)
                     },
                     credentials: 'omit',
                     body: JSON.stringify(data)
@@ -55,7 +55,7 @@ class ServerSet {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
-                        ...auth.buildAuthHeader(url)
+                        ...auth.buildAuthHeader(url, data)
                     },
                     credentials: 'omit',
                     body: JSON.stringify(data)
@@ -132,7 +132,7 @@ class ServerSet {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        ...auth.buildAuthHeader(url)
+                        ...auth.buildAuthHeader(url, data)
                     },
                     credentials: 'omit',
                     body: JSON.stringify(data)
@@ -167,6 +167,7 @@ function createSignAuth(username, signKey) {
     return new authMethod(({signKey, username}, {url, data}) => {
         const json = JSON.stringify(data)
         const signature = nacl.crypto_sign_detached(nacl.encode_utf8(url + (data ? json : "")), signKey)
+        console.log('sign', nacl.to_hex(signature), url, json)
         return {'Authorization': 'Signature ' + username + ':' + nacl.to_hex(signature)}
     }, context)
 }
