@@ -17,6 +17,8 @@ cd toolshed/backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+mkdir static                       # FIXMEMAYBE "Weiß  ich auch gar nicht, ob das benötigt wird."
+python manage.py makemigrations    # FIXME
 python manage.py migrate
 python manage.py runserver
 ```
