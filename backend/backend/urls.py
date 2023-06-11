@@ -14,9 +14,21 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Toolshed API",
+        default_version='v1',
+        description="API for all things …",
+    ),
+    public=True,
+    permission_classes=[]
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('/', 
+    path('djangoadmin/', admin.site.urls),
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
 ]
