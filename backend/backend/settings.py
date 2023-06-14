@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'drf_yasg',
+    'authentication',
 ]
 
 REST_FRAMEWORK = {
@@ -109,6 +110,7 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = 'authentication.ToolshedUser'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
