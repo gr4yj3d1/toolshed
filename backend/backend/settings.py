@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'authentication',
+    'hostadmin',
 ]
 
 REST_FRAMEWORK = {

@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from authentication.models import ToolshedUser
 from authentication.signature_auth import SignatureAuthenticationLocal
+from hostadmin.models import Domain
 
 router = routers.SimpleRouter()
 
@@ -68,33 +69,35 @@ def getUserInfo(request):
 @permission_classes([])
 @authentication_classes([])
 def registerUser(request):
-    username = request.data.get('username')
-    domain = request.data.get('domain')
-    password = request.data.get('password')
-    email = request.data.get('email')
+    try:
+        username = request.data.get('username')
+        domain = request.data.get('domain')
+        password = request.data.get('password')
+        email = request.data.get('email')
 
-    errors = {}
-    if not username:
-        errors['username'] = 'Username is required'
-    if not domain:
-        errors['domain'] = 'Domain is required'
-    if not password:
-        errors['password'] = 'Password is required'
-    if not email:
-        errors['email'] = 'Email is required'
-    if ToolshedUser.objects.filter(email=email).exists():
-        errors['email'] = 'Email already exists'
-    if ToolshedUser.objects.filter(username=username, domain=domain).exists():
-        errors['username'] = 'Username already exists'
-    if errors:
-        return Response({'errors': errors}, status=400)
+        errors = {}
+        if not username:
+            errors['username'] = 'Username is required'
+        if not domain:
+            errors['domain'] = 'Domain is required'
+        if not password:
+            errors['password'] = 'Password is required'
+        if not email:
+            errors['email'] = 'Email is required'
+        if ToolshedUser.objects.filter(email=email).exists():
+            errors['email'] = 'Email already exists'
+        if ToolshedUser.objects.filter(username=username, domain=domain).exists():
+            errors['username'] = 'Username already exists'
+        if errors:
+            return Response({'errors': errors}, status=400)
 
-    if domain in ['localhost']:
+        Domain.objects.get(name=domain, open_registration=True)
+
         user = ToolshedUser.objects.create_user(username, email, '', domain=domain)
         user.set_password(password)
         user.save()
         return Response({'username': user.username, 'domain': user.domain})
-    else:
+    except Domain.DoesNotExist:
         return Response({'errors': {'domain': 'Domain does not exist or is not open for registration'}}, status=400)
 
 

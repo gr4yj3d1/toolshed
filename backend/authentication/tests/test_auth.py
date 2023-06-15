@@ -4,6 +4,7 @@ from nacl.signing import SigningKey
 
 from authentication.models import ToolshedUser, KnownIdentity
 from authentication.tests import UserTestCase, SignatureAuthClient
+from hostadmin.models import Domain
 
 
 class KnownIdentityTestCase(TestCase):
@@ -85,7 +86,7 @@ class UserModelTestCase(UserTestCase):
 
     def test_create_existing_user(self):
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser', 'test3@abc.de', '', domain='localhost')
+            ToolshedUser.objects.create_user('testuser', 'test3@abc.de', '', domain='example.com')
 
     def test_create_existing_user2(self):
         key = SigningKey.generate()
@@ -96,17 +97,17 @@ class UserModelTestCase(UserTestCase):
 
     def test_create_reuse_email(self):
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser3', 'test@abc.de', '', domain='localhost')
+            ToolshedUser.objects.create_user('testuser3', 'test@abc.de', '', domain='example.com')
 
     def test_create_user_invalid_private_key(self):
         with self.assertRaises(TypeError):
-            ToolshedUser.objects.create_user('testuser3', 'test3@abc.de', '', domain='localhost',
+            ToolshedUser.objects.create_user('testuser3', 'test3@abc.de', '', domain='example.com',
                                              private_key=b'0123456789abcdef0123456789abcdef')
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser3', 'test3@abc.de', '', domain='localhost',
+            ToolshedUser.objects.create_user('testuser3', 'test3@abc.de', '', domain='example.com',
                                              private_key='7005c4097')
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser3', 'test3@abc.de', '', domain='localhost',
+            ToolshedUser.objects.create_user('testuser3', 'test3@abc.de', '', domain='example.com',
                                              private_key='0123456789abcdef0123456789abcdef'
                                                          'Z123456789abcdef0123456789abcdef')
 
@@ -264,7 +265,8 @@ class RegistrationApiTestCase(TestCase):
         admin = ToolshedUser.objects.create_superuser('admin', 'admin@localhost', '')
         admin.set_password('testpassword')
         admin.save()
-        example_com = type('obj', (object,), {'name': 'localhost'})
+        example_com = Domain.objects.create(name='example.com', owner=admin, open_registration=True)
+        example_com.save()
         user2 = ToolshedUser.objects.create_user('testuser2', 'test2@abc.de', '', domain=example_com.name)
         user2.set_password('testpassword3')
         user2.save()
@@ -272,20 +274,20 @@ class RegistrationApiTestCase(TestCase):
     def test_registration(self):
         self.assertEqual(ToolshedUser.objects.all().count(), 2)
         reply = self.client.post('/auth/register/',
-                                 {'username': 'testuser', 'password': 'testpassword2', 'domain': 'localhost',
+                                 {'username': 'testuser', 'password': 'testpassword2', 'domain': 'example.com',
                                   'email': 'test@abc.de'})
         self.assertEqual(reply.status_code, 200)
         self.assertTrue('username' in reply.json())
         self.assertTrue('domain' in reply.json())
         user = ToolshedUser.objects.get(username='testuser')
         self.assertEqual(user.email, 'test@abc.de')
-        self.assertEqual(user.domain, 'localhost')
+        self.assertEqual(user.domain, 'example.com')
         self.assertTrue(user.check_password('testpassword2'))
         self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_fail(self):
         reply = self.client.post('/auth/register/',
-                                 {'username': '', 'password': 'testpassword2', 'domain': 'localhost',
+                                 {'username': '', 'password': 'testpassword2', 'domain': 'example.com',
                                   'email': 'test@abc.de'})
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
@@ -294,7 +296,7 @@ class RegistrationApiTestCase(TestCase):
 
     def test_registration_fail2(self):
         reply = self.client.post('/auth/register/',
-                                 {'password': 'testpassword2', 'domain': 'localhost', 'email': 'test@abc.de'})
+                                 {'password': 'testpassword2', 'domain': 'example.com', 'email': 'test@abc.de'})
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('username' in reply.json()['errors'])
@@ -302,7 +304,7 @@ class RegistrationApiTestCase(TestCase):
 
     def test_registration_fail3(self):
         reply = self.client.post('/auth/register/',
-                                 {'username': 'testuser', 'password': '', 'domain': 'localhost',
+                                 {'username': 'testuser', 'password': '', 'domain': 'example.com',
                                   'email': 'test@abc.de'})
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
@@ -311,7 +313,7 @@ class RegistrationApiTestCase(TestCase):
 
     def test_registration_fail4(self):
         reply = self.client.post('/auth/register/',
-                                 {'username': 'testuser', 'domain': 'localhost', 'email': 'test@abc.de'})
+                                 {'username': 'testuser', 'domain': 'example.com', 'email': 'test@abc.de'})
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('password' in reply.json()['errors'])
@@ -336,7 +338,7 @@ class RegistrationApiTestCase(TestCase):
 
     def test_registration_fail7(self):
         reply = self.client.post('/auth/register/',
-                                 {'username': 'testuser', 'password': 'testpassword2', 'domain': 'localhost',
+                                 {'username': 'testuser', 'password': 'testpassword2', 'domain': 'example.com',
                                   'email': ''})
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
@@ -345,7 +347,7 @@ class RegistrationApiTestCase(TestCase):
 
     def test_registration_fail8(self):
         reply = self.client.post('/auth/register/',
-                                 {'username': 'testuser', 'password': 'testpassword2', 'domain': 'localhost'})
+                                 {'username': 'testuser', 'password': 'testpassword2', 'domain': 'example.com'})
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('email' in reply.json()['errors'])
@@ -353,7 +355,7 @@ class RegistrationApiTestCase(TestCase):
 
     def test_registration_existing_user(self):
         reply = self.client.post('/auth/register/',
-                                 {'username': 'testuser2', 'password': 'testpassword2', 'domain': 'localhost',
+                                 {'username': 'testuser2', 'password': 'testpassword2', 'domain': 'example.com',
                                   'email': 'test3@abc.de'})
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
@@ -371,7 +373,7 @@ class RegistrationApiTestCase(TestCase):
 
     def test_registration_reuse_email(self):
         reply = self.client.post('/auth/register/',
-                                 {'username': 'testuser', 'password': 'testpassword2', 'domain': 'localhost',
+                                 {'username': 'testuser', 'password': 'testpassword2', 'domain': 'example.com',
                                   'email': 'test2@abc.de'})
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())

@@ -4,6 +4,7 @@ from django.test import TestCase, Client
 from nacl.encoding import HexEncoder
 
 from authentication.models import ToolshedUser, KnownIdentity
+from hostadmin.models import Domain
 from nacl.signing import SigningKey
 
 
@@ -73,7 +74,8 @@ class UserTestCase(TestCase):
         admin = ToolshedUser.objects.create_superuser('admin', 'admin@localhost', '')
         admin.set_password('testpassword')
         admin.save()
-        example_com = type('obj', (object,), {'name': 'example.com'})
+        example_com = Domain.objects.create(name='example.com', owner=admin, open_registration=True)
+        example_com.save()
         self.local_user1 = ToolshedUser.objects.create_user('testuser', 'test@abc.de', '', domain=example_com.name)
         self.local_user1.set_password('testpassword2')
         self.local_user1.save()
