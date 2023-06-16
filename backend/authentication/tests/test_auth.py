@@ -1,10 +1,91 @@
-from django.test import TestCase, Client
+import json
+
+from django.test import TestCase, Client, RequestFactory
 from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey
 
 from authentication.models import ToolshedUser, KnownIdentity
 from authentication.tests import UserTestCase, SignatureAuthClient
 from hostadmin.models import Domain
+
+
+class AuthorizationTestCase(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+        self.factory = RequestFactory()
+        from nacl.signing import SigningKey
+        self.key = SigningKey.generate()
+        self.signature = self.key.sign("test".encode('utf-8'), encoder=HexEncoder).signature.decode('utf-8')
+        self.data = json.dumps({'a': 'b'})
+        self.signature_with_data = self.key.sign(
+            ("test" + self.data).encode('utf-8'), encoder=HexEncoder).signature.decode('utf-8')
+
+    def test_parse_auth_header(self):
+        request = self.factory.get('/test')
+        from authentication.signature_auth import verify_request
+        with self.assertRaises(ValueError):
+            verify_request(request, "")
+
+    def test_parse_auth_header2(self):
+        request = self.factory.get('/test', HTTP_AUTHORIZATION="Signature ")
+        from authentication.signature_auth import verify_request
+        with self.assertRaises(ValueError):
+            verify_request(request, "")
+
+    def test_parse_auth_header3(self):
+        request = self.factory.get('/test', HTTP_AUTHORIZATION="Signature author@domain")
+        from authentication.signature_auth import verify_request
+        with self.assertRaises(ValueError):
+            verify_request(request, "")
+
+    def test_parse_auth_header4(self):
+        from authentication.signature_auth import verify_request
+        request = self.factory.get('/test', HTTP_AUTHORIZATION="Signature author@domain:" + self.signature)
+        username, domain, signed_data, signature_bytes_hex = verify_request(request, "")
+        self.assertEqual(username, "author")
+        self.assertEqual(domain, "domain")
+        self.assertEqual(signed_data, "http://testserver/test")
+        self.assertEqual(signature_bytes_hex, self.signature)
+
+    def test_parse_auth_header5(self):
+        from authentication.signature_auth import verify_request
+        request = self.factory.post('/test', self.data, content_type="application/json",
+                                    HTTP_AUTHORIZATION="Signature author@domain:" + self.signature_with_data)
+        username, domain, signed_data, signature_bytes_hex = verify_request(request, request.body.decode('utf-8'))
+        self.assertEqual(username, "author")
+        self.assertEqual(domain, "domain")
+        self.assertEqual(signed_data, "http://testserver/test" + self.data)
+        self.assertEqual(signature_bytes_hex, self.signature_with_data)
+
+    def test_parse_auth_header6(self):
+        from authentication.signature_auth import verify_request
+        request = self.factory.put('/test', self.data, content_type="application/json",
+                                   HTTP_AUTHORIZATION="Signature author@domain:" + self.signature_with_data)
+        username, domain, signed_data, signature_bytes_hex = verify_request(request, request.body.decode('utf-8'))
+        self.assertEqual(username, "author")
+        self.assertEqual(domain, "domain")
+        self.assertEqual(signed_data, "http://testserver/test" + self.data)
+        self.assertEqual(signature_bytes_hex, self.signature_with_data)
+
+    def test_parse_auth_header7(self):
+        from authentication.signature_auth import verify_request
+        request = self.factory.delete('/test', HTTP_AUTHORIZATION="Signature author@domain:" + self.signature)
+        username, domain, signed_data, signature_bytes_hex = verify_request(request, request.body.decode('utf-8'))
+        self.assertEqual(username, "author")
+        self.assertEqual(domain, "domain")
+        self.assertEqual(signed_data, "http://testserver/test")
+        self.assertEqual(signature_bytes_hex, self.signature)
+
+    def test_parse_auth_header8(self):
+        from authentication.signature_auth import verify_request
+        request = self.factory.patch('/test', self.data, content_type="application/json",
+                                     HTTP_AUTHORIZATION="Signature author@domain:" + self.signature_with_data)
+        username, domain, signed_data, signature_bytes_hex = verify_request(request, request.body.decode('utf-8'))
+        self.assertEqual(username, "author")
+        self.assertEqual(domain, "domain")
+        self.assertEqual(signed_data, "http://testserver/test" + self.data)
+        self.assertEqual(signature_bytes_hex, self.signature_with_data)
 
 
 class KnownIdentityTestCase(TestCase):
