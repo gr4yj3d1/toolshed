@@ -45,3 +45,28 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class InventoryItem(SoftDeleteModel):
+    published = models.BooleanField(default=False)
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True,
+                                 related_name='inventory_items')
+    availability_policy = models.CharField(max_length=255)
+    owned_quantity = models.IntegerField(default=1, validators=[MinValueValidator(0)])
+    owner = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='inventory_items')
+    created_at = models.DateTimeField(auto_now_add=True)
+    tags = models.ManyToManyField('Tag', through='ItemTag', related_name='inventory_items')
+    properties = models.ManyToManyField('Property', through='ItemProperty')
+
+
+class ItemProperty(models.Model):
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    inventory_item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE)
+    value = models.CharField(max_length=255)
+
+
+class ItemTag(models.Model):
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    inventory_item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE)
