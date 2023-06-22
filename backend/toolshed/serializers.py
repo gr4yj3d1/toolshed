@@ -1,6 +1,5 @@
 from rest_framework import serializers
-
-from authentication.models import KnownIdentity, ToolshedUser
+from authentication.models import KnownIdentity, ToolshedUser, FriendRequestIncoming
 from authentication.serializers import OwnerSerializer
 from files.models import File
 from files.serializers import FileSerializer
@@ -16,6 +15,17 @@ class FriendSerializer(serializers.ModelSerializer):
 
     def get_username(self, obj):
         return obj.username + '@' + obj.domain
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    befriender = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FriendRequestIncoming
+        fields = ['befriender', 'befriender_public_key', 'secret', 'id']
+
+    def get_befriender(self, obj):
+        return obj.befriender_username + '@' + obj.befriender_domain
 
 
 class PropertySerializer(serializers.ModelSerializer):

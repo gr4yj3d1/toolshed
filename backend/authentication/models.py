@@ -102,6 +102,9 @@ class ToolshedUser(AbstractUser):
         private_key = SigningKey(self.private_key.encode(), encoder=HexEncoder)
         return private_key.sign(message.encode('utf-8'), encoder=HexEncoder).signature.decode('utf-8')
 
+    def public_key(self):
+        return self.public_identity.public_key
+
 
 class FriendRequestOutgoing(models.Model):
     secret = models.CharField(max_length=255)

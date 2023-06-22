@@ -1,3 +1,5 @@
+from nacl.exceptions import BadSignatureError
+from nacl.signing import VerifyKey
 from rest_framework import authentication
 
 from authentication.models import KnownIdentity, ToolshedUser
@@ -46,6 +48,28 @@ def verify_request(request, raw_request_body):
         signed_data += raw_request_body
 
     return username, domain, signed_data, signature_bytes_hex
+
+
+def verify_incoming_friend_request(request, raw_request_body):
+    try:
+        username, domain, signed_data, signature_bytes_hex = verify_request(request, raw_request_body)
+    except ValueError:
+        return False
+    try:
+        befriender = request.data['befriender']
+        befriender_key = request.data['befriender_key']
+    except KeyError:
+        return False
+    if username + "@" + domain != befriender:
+        return False
+    if len(befriender_key) != 64:
+        return False
+    verify_key = VerifyKey(bytes.fromhex(befriender_key))
+    try:
+        verify_key.verify(signed_data.encode('utf-8'), bytes.fromhex(signature_bytes_hex))
+        return True
+    except BadSignatureError:
+        return False
 
 
 def authenticate_request_against_known_identities(request, raw_request_body):
