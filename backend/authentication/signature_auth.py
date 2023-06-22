@@ -1,5 +1,6 @@
 from rest_framework import authentication
-from authentication.models import ToolshedUser
+
+from authentication.models import KnownIdentity, ToolshedUser
 
 
 def split_userhandle_or_throw(userhandle):
@@ -47,6 +48,21 @@ def verify_request(request, raw_request_body):
     return username, domain, signed_data, signature_bytes_hex
 
 
+def authenticate_request_against_known_identities(request, raw_request_body):
+    try:
+        username, domain, signed_data, signature_bytes_hex = verify_request(request, raw_request_body)
+    except ValueError:
+        return None
+    try:
+        author_identity = KnownIdentity.objects.get(username=username, domain=domain)
+    except KnownIdentity.DoesNotExist:
+        return None
+    if author_identity.verify(signed_data, signature_bytes_hex):
+        return author_identity
+    else:
+        return None
+
+
 def authenticate_request_against_local_users(request, raw_request_body):
     try:
         username, domain, signed_data, signature_bytes_hex = verify_request(request, raw_request_body)
@@ -60,6 +76,12 @@ def authenticate_request_against_local_users(request, raw_request_body):
         return author_user
     else:
         return None
+
+
+class SignatureAuthentication(authentication.BaseAuthentication):
+    def authenticate(self, request):
+        return authenticate_request_against_known_identities(
+            request, request.body.decode('utf-8')), None
 
 
 class SignatureAuthenticationLocal(authentication.BaseAuthentication):

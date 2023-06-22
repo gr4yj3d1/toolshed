@@ -32,5 +32,6 @@ urlpatterns = [
     path('djangoadmin/', admin.site.urls),
     path('auth/', include('authentication.api')),
     path('admin/', include('hostadmin.api')),
+    path('api/', include('toolshed.api.friend')),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
 ]

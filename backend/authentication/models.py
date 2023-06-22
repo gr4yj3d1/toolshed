@@ -91,6 +91,10 @@ class ToolshedUser(AbstractUser):
     def __str__(self):
         return f"{self.username}@{self.domain}"
 
+    @property
+    def friends(self):
+        return self.public_identity.friends
+
     def sign(self, message):
         if type(message) != str:
             raise TypeError('Message must be a string')

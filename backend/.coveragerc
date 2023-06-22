@@ -7,8 +7,10 @@ show_missing = True
 skip_covered = True
 omit =
     */tests/*
+    */migrations/*
     backend/asgi.py
     backend/wsgi.py
     backend/settings.py
     manage.py
     configure.py
+    testdata.py

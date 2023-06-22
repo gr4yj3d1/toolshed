@@ -13,10 +13,10 @@ class DummyExternalUser:
         self.username = username
         self.domain = domain
         self.__signing_key = SigningKey.generate()
-        self.public_identity, _ = KnownIdentity.objects.get_or_create(
+        self.public_identity = KnownIdentity.objects.get_or_create(
             username=username,
             domain=domain,
-            public_key=self.public_key()) if known else None
+            public_key=self.public_key())[0] if known else None
 
     def __str__(self):
         return self.username + '@' + self.domain

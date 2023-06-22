@@ -5,7 +5,7 @@ from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey
 
 from authentication.models import ToolshedUser, KnownIdentity
-from authentication.tests import UserTestCase, SignatureAuthClient
+from authentication.tests import UserTestCase, SignatureAuthClient, DummyExternalUser
 from hostadmin.models import Domain
 
 
@@ -303,6 +303,50 @@ class UserApiTestCase(UserTestCase):
         target = "/auth/user/"
         signature = self.local_user1.sign("http://testserver" + target)
         header = {'HTTP_AUTHORIZATION': 'Signature @' + self.local_user1.domain + ':' + signature}
+        reply = self.anonymous_client.get(target, **header)
+        self.assertEqual(reply.status_code, 403)
+
+
+class FriendApiTestCase(UserTestCase):
+    def setUp(self):
+        super().setUp()
+        self.local_user1.friends.add(self.local_user2.public_identity)
+        self.local_user1.friends.add(self.ext_user1.public_identity)
+        self.ext_user1.friends.add(self.local_user1.public_identity)
+        self.anonymous_client = Client(SERVER_NAME='testserver')
+        self.client = SignatureAuthClient()
+
+    def test_friend_local(self):
+        reply = self.client.get('/api/friends/', self.local_user1)
+        self.assertEqual(reply.status_code, 200)
+
+    def test_friend_external(self):
+        reply = self.client.get('/api/friends/', self.ext_user1)
+        self.assertEqual(reply.status_code, 200)
+
+    def test_friend_fail(self):
+        reply = self.anonymous_client.get('/api/friends/')
+        self.assertEqual(reply.status_code, 403)
+
+    def test_friend_fail2(self):
+        target = "/api/friends/"
+        signature = self.local_user1.sign("http://testserver2" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.local_user1) + ':' + signature}
+        reply = self.anonymous_client.get(target, **header)
+        self.assertEqual(reply.status_code, 403)
+
+    def test_friend_fail3(self):
+        target = "/api/friends/"
+        unknown_user = DummyExternalUser('extuser3', 'external.org', False)
+        signature = unknown_user.sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(unknown_user) + ':' + signature}
+        reply = self.anonymous_client.get(target, **header)
+        self.assertEqual(reply.status_code, 403)
+
+    def test_friend_fail4(self):
+        target = "/api/friends/"
+        signature = self.local_user1.sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Auth ' + str(self.local_user1) + ':' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 

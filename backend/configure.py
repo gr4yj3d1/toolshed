@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+from argparse import ArgumentParser
 
 import dotenv
 
@@ -75,15 +76,67 @@ def configure():
         from django.core.management import call_command
         call_command('createsuperuser')
 
-    if not os.path.exists('static'):
-        if yesno("No static directory found, do you want to create one?", default=True):
-            os.mkdir('static')
-
     call_command('collectstatic', '--no-input')
 
-    # if yesno("Do you want to load initial data?"):
-    #   call_command('loaddata', 'initial_data.json')
+
+def reset():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
+    import django
+
+    django.setup()
+
+    try:
+        os.remove('db.sqlite3')
+    except FileNotFoundError:
+        pass
+
+    os.system("git clean -f */migrations")
+
+    from django.core.management import call_command
+
+    apps = ['authentication', 'authtoken', 'sessions', 'hostadmin', 'toolshed', 'admin']
+    for app in apps:
+        call_command('makemigrations', app)
+
+    for app in apps:
+        call_command('migrate', app)
+
+
+def testdata():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
+    import django
+
+    django.setup()
+    if os.path.exists('testdata.py'):
+        from testdata import create_test_data
+        create_test_data()
+    else:
+        print('No testdata file found')
+        print('Please create a file named testdata.py in the shared_data directory. the function create_test_data() '
+              'will be called automatically and should create all necessary test data.')
+
+
+def main():
+    parser = ArgumentParser(description='Toolshed Server Configuration')
+    parser.add_argument('--yes', '-y', help='Answer yes to all questions', action='store_true')
+    parser.add_argument('--no', '-n', help='Answer no to all questions', action='store_true')
+    parser.add_argument('cmd', help='Command', default='configure', nargs='?')
+    args = parser.parse_args()
+
+    if args.yes and args.no:
+        print('Error: --yes and --no are mutually exclusive')
+        exit(1)
+
+    if args.cmd == 'configure':
+        configure()
+    elif args.cmd == 'reset':
+        reset()
+    elif args.cmd == 'testdata':
+        testdata()
+    else:
+        print('Unknown command: {}'.format(args.cmd))
+        exit(1)
 
 
 if __name__ == '__main__':
-    configure()
+    main()
