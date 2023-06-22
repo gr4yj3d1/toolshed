@@ -18,7 +18,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 python configure.py
-python manage.py runserver 0.0.0.0:800 --insecure
+python manage.py runserver 0.0.0.0:8000 --insecure
 ```
 to run this in properly in production, you need to configure a webserver to serve the static files and proxy the requests to the backend, then run the backend with just `python manage.py runserver` without the `--insecure` flag.
 
