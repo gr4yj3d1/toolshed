@@ -1,0 +1,30 @@
+{
+  "depends": [ "git:base" ],
+  "categories": [
+    { "name":  "screws", "parent": "hardware"}
+  ],
+  "tags": [
+    {"name": "m1", "category": "screws"},
+    {"name": "m2", "category": "screws"},
+    {"name": "m2.5", "category": "screws"},
+    {"name": "m3", "category": "screws"},
+    {"name": "m4", "category": "screws"},
+    {"name": "m5", "category": "screws"},
+    {"name": "m6", "category": "screws"},
+    {"name": "m8", "category": "screws"},
+    {"name": "m10", "category": "screws"},
+    {"name": "m12", "category": "screws"},
+    {"name": "m16", "category": "screws"},
+    {"name": "torx", "category": "screws"},
+    {"name": "hex", "category": "screws"},
+    {"name": "phillips", "category": "screws"},
+    {"name": "pozidriv", "category": "screws"},
+    {"name": "slotted", "category": "screws"},
+    {"name": "socket", "category": "screws"},
+    {"name": "flat", "category": "screws"},
+    {"name": "pan", "category": "screws"},
+    {"name": "button", "category": "screws"},
+    {"name": "countersunk", "category": "screws"},
+    {"name": "round", "category": "screws"}
+  ]
+}
