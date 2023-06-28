@@ -149,7 +149,29 @@ USE_TZ = True
 STATIC_ROOT = 'staticfiles'
 STATIC_URL = '/static/'
 
+MEDIA_ROOT = 'userfiles'
+MEDIA_URL = '/media/'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {
+            'base_url': MEDIA_URL,
+            'location': BASE_DIR / MEDIA_ROOT
+        },
+    },
+    'staticfiles': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {
+            'base_url': STATIC_URL,
+            'location': BASE_DIR / STATIC_ROOT
+        },
+    },
+}
+
+TEST_RUNNER = 'backend.test_runner.FastTestRunner'
