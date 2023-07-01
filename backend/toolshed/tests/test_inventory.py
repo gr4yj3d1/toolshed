@@ -1,6 +1,6 @@
 from authentication.tests import SignatureAuthClient, UserTestMixin, ToolshedTestCase
 from toolshed.models import InventoryItem, Category
-from toolshed.tests import InventoryTestMixin
+from toolshed.tests import InventoryTestMixin, CategoryTestMixin, TagTestMixin, PropertyTestMixin
 
 client = SignatureAuthClient()
 
@@ -10,6 +10,9 @@ class InventoryTestCase(UserTestMixin, InventoryTestMixin, ToolshedTestCase):
     def setUp(self):
         super().setUp()
         self.prepare_users()
+        self.prepare_categories()
+        self.prepare_tags()
+        self.prepare_properties()
         self.prepare_inventory()
 
     def test_get_inventory(self):

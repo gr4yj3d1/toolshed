@@ -1,22 +1,17 @@
 from authentication.tests import SignatureAuthClient, UserTestMixin, ToolshedTestCase
-from toolshed.models import Tag, Category
+from toolshed.models import Tag
+from toolshed.tests import TagTestMixin, CategoryTestMixin
 
 client = SignatureAuthClient()
 
 
-class TagTestCase(UserTestMixin, ToolshedTestCase):
+class TagTestCase(TagTestMixin, CategoryTestMixin, UserTestMixin, ToolshedTestCase):
 
     def setUp(self):
         super().setUp()
         self.prepare_users()
-        self.f['cat1'] = Category.objects.create(name='cat1')
-        self.f['cat1'].save()
-        self.f['tag1'] = Tag.objects.create(name='tag1', description='tag1 description', category=self.f['cat1'])
-        self.f['tag1'].save()
-        self.f['tag2'] = Tag.objects.create(name='tag2', description='tag2 description', category=self.f['cat1'])
-        self.f['tag2'].save()
-        self.f['tag3'] = Tag.objects.create(name='tag3')
-        self.f['tag3'].save()
+        self.prepare_categories()
+        self.prepare_tags()
 
     def test_tags(self):
         self.assertEqual(len(Tag.objects.all()), 3)
@@ -37,19 +32,13 @@ class TagTestCase(UserTestMixin, ToolshedTestCase):
         self.assertEqual(self.f['cat1'].tags.last(), self.f['tag2'])
 
 
-class TagApiTestCase(UserTestMixin, ToolshedTestCase):
+class TagApiTestCase(TagTestMixin, CategoryTestMixin, UserTestMixin, ToolshedTestCase):
 
     def setUp(self):
         super().setUp()
         self.prepare_users()
-        self.f['cat1'] = Category.objects.create(name='cat1')
-        self.f['cat1'].save()
-        self.f['tag1'] = Tag.objects.create(name='tag1', description='tag1 description', category=self.f['cat1'])
-        self.f['tag1'].save()
-        self.f['tag2'] = Tag.objects.create(name='tag2', description='tag2 description', category=self.f['cat1'])
-        self.f['tag2'].save()
-        self.f['tag3'] = Tag.objects.create(name='tag3')
-        self.f['tag3'].save()
+        self.prepare_categories()
+        self.prepare_tags()
 
     def test_get_tags(self):
         reply = client.get('/api/tags/', self.f['local_user1'])
