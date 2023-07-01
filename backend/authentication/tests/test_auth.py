@@ -1,15 +1,15 @@
 import json
 
-from django.test import TestCase, Client, RequestFactory
+from django.test import Client, RequestFactory
 from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey
 
 from authentication.models import ToolshedUser, KnownIdentity
-from authentication.tests import UserTestCase, SignatureAuthClient, DummyExternalUser
+from authentication.tests import UserTestMixin, SignatureAuthClient, DummyExternalUser, ToolshedTestCase
 from hostadmin.models import Domain
 
 
-class AuthorizationTestCase(TestCase):
+class AuthorizationTestCase(ToolshedTestCase):
 
     def setUp(self):
         self.client = Client()
@@ -88,7 +88,7 @@ class AuthorizationTestCase(TestCase):
         self.assertEqual(signature_bytes_hex, self.signature_with_data)
 
 
-class KnownIdentityTestCase(TestCase):
+class KnownIdentityTestCase(ToolshedTestCase):
     key = None
 
     def setUp(self):
@@ -138,36 +138,37 @@ class KnownIdentityTestCase(TestCase):
             identity.verify(message, bytes.fromhex(signed.decode('utf-8')))
 
 
-class UserModelTestCase(UserTestCase):
+class UserModelTestCase(UserTestMixin, ToolshedTestCase):
     def setUp(self):
         super().setUp()
+        self.prepare_users()
 
     def test_admin(self):
-        user = ToolshedUser.objects.get(username='admin')
+        user = self.f['admin']
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
         self.assertTrue(user.is_active)
         self.assertEqual(user.domain, 'localhost')
-        self.assertEqual(user.email, 'admin@localhost')
-        self.assertEqual(user.username, 'admin')
+        self.assertEqual(user.email, 'testadmin@localhost')
+        self.assertEqual(user.username, 'testadmin')
 
     def test_user(self):
-        user = ToolshedUser.objects.get(username='testuser')
+        user = self.f['local_user1']
         self.assertFalse(user.is_superuser)
         self.assertFalse(user.is_staff)
         self.assertTrue(user.is_active)
         self.assertEqual(user.domain, 'example.com')
-        self.assertEqual(user.email, 'test@abc.de')
-        self.assertEqual(user.username, 'testuser')
+        self.assertEqual(user.email, 'test1@abc.de')
+        self.assertEqual(user.username, 'testuser1')
         self.assertEqual(len(user.private_key), 64)
         self.assertEqual(type(user.public_identity), KnownIdentity)
         self.assertEqual(user.public_identity.domain, 'example.com')
-        self.assertEqual(user.public_identity.username, 'testuser')
+        self.assertEqual(user.public_identity.username, 'testuser1')
         self.assertEqual(len(user.public_identity.public_key), 64)
 
     def test_create_existing_user(self):
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser', 'test3@abc.de', '', domain='example.com')
+            ToolshedUser.objects.create_user('testuser1', 'test3@abc.de', '', domain='example.com')
 
     def test_create_existing_user2(self):
         key = SigningKey.generate()
@@ -178,7 +179,7 @@ class UserModelTestCase(UserTestCase):
 
     def test_create_reuse_email(self):
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser3', 'test@abc.de', '', domain='example.com')
+            ToolshedUser.objects.create_user('testuser3', 'test1@abc.de', '', domain='example.com')
 
     def test_create_user_invalid_private_key(self):
         with self.assertRaises(TypeError):
@@ -193,60 +194,61 @@ class UserModelTestCase(UserTestCase):
                                                          'Z123456789abcdef0123456789abcdef')
 
     def test_signature(self):
-        user = self.local_user1
+        user = self.f['local_user1']
         message = 'some message'
         signature = user.sign(message)
         self.assertEqual(len(signature), 128)
         self.assertTrue(user.public_identity.verify(message, signature))
 
     def test_signature_fail(self):
-        user = self.local_user1
+        user = self.f['local_user1']
         message = 'some message'
         signature = user.sign(message)
         self.assertFalse(user.public_identity.verify(message + 'x', signature))
 
     def test_signature_fail2(self):
-        user = self.local_user1
+        user = self.f['local_user1']
         message = 'some message'
         signature = user.sign(message)
         signature = signature[:-2] + 'ee'
         self.assertFalse(user.public_identity.verify(message, signature))
 
     def test_signature_fail3(self):
-        user1 = self.local_user1
-        user2 = self.local_user2
+        user1 = self.f['local_user1']
+        user2 = self.f['local_user2']
         message = 'some message'
         signature = user1.sign(message)
         self.assertFalse(user2.public_identity.verify(message, signature))
 
     def test_signature_fail4(self):
-        user = self.local_user1
+        user = self.f['local_user1']
         message = 'some message'
         with self.assertRaises(TypeError):
             user.sign(message.encode('utf-8'))
 
 
-class UserApiTestCase(UserTestCase):
+class UserApiTestCase(UserTestMixin, ToolshedTestCase):
 
     def setUp(self):
         super().setUp()
+        self.prepare_users()
         self.anonymous_client = Client(SERVER_NAME='testserver')
         self.client = SignatureAuthClient()
 
     def test_user_info(self):
-        reply = self.client.get('/auth/user/', self.local_user1)
+        reply = self.client.get('/auth/user/', self.f['local_user1'])
         self.assertEqual(reply.status_code, 200)
-        self.assertEqual(reply.json()['username'], 'testuser')
+        self.assertEqual(reply.json()['username'], 'testuser1')
         self.assertEqual(reply.json()['domain'], 'example.com')
-        self.assertEqual(reply.json()['email'], 'test@abc.de')
+        self.assertEqual(reply.json()['email'], 'test1@abc.de')
 
     def test_user_info2(self):
         target = "/auth/user/"
-        signature = self.local_user1.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.local_user1) + ':' + signature}
+        signature = self.f['local_user1'].sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.f['local_user1']) + ':' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 200)
-        self.assertEqual(reply.json()['username'], 'testuser')
+        self.assertEqual(reply.json()['username'], 'testuser1')
         self.assertEqual(reply.json()['domain'], 'example.com')
 
     def test_user_info_fail(self):
@@ -254,74 +256,75 @@ class UserApiTestCase(UserTestCase):
         self.assertEqual(reply.status_code, 403)
 
     def test_user_info_fail2(self):
-        reply = self.client.get('/auth/user/', self.ext_user1)
+        reply = self.client.get('/auth/user/', self.f['ext_user1'])
         self.assertEqual(reply.status_code, 403)
 
     def test_user_info_fail3(self):
         target = "/auth/user/"
-        signature = self.local_user1.sign("http://testserver2" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.local_user1) + ':' + signature}
+        signature = self.f['local_user1'].sign("http://testserver2" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.f['local_user1']) + ':' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
     def test_user_info_fail4(self):
         target = "/auth/user/"
-        signature = self.local_user1.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Auth ' + str(self.local_user1) + ':' + signature}
+        signature = self.f['local_user1'].sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Auth ' + str(self.f['local_user1']) + ':' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
     def test_user_info_fail5(self):
         target = "/auth/user/"
-        signature = self.local_user1.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.local_user1)}
+        signature = self.f['local_user1'].sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.f['local_user1'])}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
     def test_user_info_fail6(self):
         target = "/auth/user/"
-        signature = self.local_user1.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.local_user1) + ':' + signature + 'f'}
+        signature = self.f['local_user1'].sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.f['local_user1']) + ':' + signature + 'f'}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
     def test_user_info_fail7(self):
         target = "/auth/user/"
-        signature = self.local_user1.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + self.local_user1.username + ':' + signature}
+        signature = self.f['local_user1'].sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + self.f['local_user1'].username + ':' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
     def test_user_info_fail8(self):
         target = "/auth/user/"
-        signature = self.local_user1.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + self.local_user1.username + '@:' + signature}
+        signature = self.f['local_user1'].sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + self.f['local_user1'].username + '@:' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
     def test_user_info_fail9(self):
         target = "/auth/user/"
-        signature = self.local_user1.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature @' + self.local_user1.domain + ':' + signature}
+        signature = self.f['local_user1'].sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature @' + self.f['local_user1'].domain + ':' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
 
-class FriendApiTestCase(UserTestCase):
+class FriendApiTestCase(UserTestMixin, ToolshedTestCase):
     def setUp(self):
         super().setUp()
-        self.local_user1.friends.add(self.local_user2.public_identity)
-        self.local_user1.friends.add(self.ext_user1.public_identity)
-        self.ext_user1.friends.add(self.local_user1.public_identity)
+        self.prepare_users()
+        self.f['local_user1'].friends.add(self.f['local_user2'].public_identity)
+        self.f['local_user1'].friends.add(self.f['ext_user1'].public_identity)
+        self.f['ext_user1'].friends.add(self.f['local_user1'].public_identity)
         self.anonymous_client = Client(SERVER_NAME='testserver')
         self.client = SignatureAuthClient()
 
     def test_friend_local(self):
-        reply = self.client.get('/api/friends/', self.local_user1)
+        reply = self.client.get('/api/friends/', self.f['local_user1'])
         self.assertEqual(reply.status_code, 200)
 
     def test_friend_external(self):
-        reply = self.client.get('/api/friends/', self.ext_user1)
+        reply = self.client.get('/api/friends/', self.f['ext_user1'])
         self.assertEqual(reply.status_code, 200)
 
     def test_friend_fail(self):
@@ -330,8 +333,8 @@ class FriendApiTestCase(UserTestCase):
 
     def test_friend_fail2(self):
         target = "/api/friends/"
-        signature = self.local_user1.sign("http://testserver2" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.local_user1) + ':' + signature}
+        signature = self.f['local_user1'].sign("http://testserver2" + target)
+        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(self.f['local_user1']) + ':' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
@@ -345,19 +348,20 @@ class FriendApiTestCase(UserTestCase):
 
     def test_friend_fail4(self):
         target = "/api/friends/"
-        signature = self.local_user1.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Auth ' + str(self.local_user1) + ':' + signature}
+        signature = self.f['local_user1'].sign("http://testserver" + target)
+        header = {'HTTP_AUTHORIZATION': 'Auth ' + str(self.f['local_user1']) + ':' + signature}
         reply = self.anonymous_client.get(target, **header)
         self.assertEqual(reply.status_code, 403)
 
 
-class LoginApiTestCase(UserTestCase):
+class LoginApiTestCase(UserTestMixin, ToolshedTestCase):
     user = None
     client = Client(SERVER_NAME='testserver')
 
     def setUp(self):
         super().setUp()
-        self.user = self.local_user1
+        self.prepare_users()
+        self.user = self.f['local_user1']
 
     def test_login(self):
         reply = self.client.post('/auth/token/',
@@ -383,21 +387,15 @@ class LoginApiTestCase(UserTestCase):
         self.assertTrue('error' in reply.json())
 
 
-class RegistrationApiTestCase(TestCase):
+class RegistrationApiTestCase(UserTestMixin, ToolshedTestCase):
     client = Client(SERVER_NAME='testserver')
 
     def setUp(self):
-        admin = ToolshedUser.objects.create_superuser('admin', 'admin@localhost', '')
-        admin.set_password('testpassword')
-        admin.save()
-        example_com = Domain.objects.create(name='example.com', owner=admin, open_registration=True)
-        example_com.save()
-        user2 = ToolshedUser.objects.create_user('testuser2', 'test2@abc.de', '', domain=example_com.name)
-        user2.set_password('testpassword3')
-        user2.save()
+        super().setUp()
+        self.prepare_users()
 
     def test_registration(self):
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
         reply = self.client.post('/auth/register/',
                                  {'username': 'testuser', 'password': 'testpassword2', 'domain': 'example.com',
                                   'email': 'test@abc.de'})
@@ -408,7 +406,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(user.email, 'test@abc.de')
         self.assertEqual(user.domain, 'example.com')
         self.assertTrue(user.check_password('testpassword2'))
-        self.assertEqual(ToolshedUser.objects.all().count(), 3)
+        self.assertEqual(ToolshedUser.objects.all().count(), 4)
 
     def test_registration_fail(self):
         reply = self.client.post('/auth/register/',
@@ -417,7 +415,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('username' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_fail2(self):
         reply = self.client.post('/auth/register/',
@@ -425,7 +423,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('username' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_fail3(self):
         reply = self.client.post('/auth/register/',
@@ -434,7 +432,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('password' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_fail4(self):
         reply = self.client.post('/auth/register/',
@@ -442,7 +440,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('password' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_fail5(self):
         reply = self.client.post('/auth/register/',
@@ -451,7 +449,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('domain' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_fail6(self):
         reply = self.client.post('/auth/register/',
@@ -459,7 +457,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('domain' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_fail7(self):
         reply = self.client.post('/auth/register/',
@@ -468,7 +466,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('email' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_fail8(self):
         reply = self.client.post('/auth/register/',
@@ -476,7 +474,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('email' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_existing_user(self):
         reply = self.client.post('/auth/register/',
@@ -485,7 +483,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         # TODO: check for sensible error message
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_foreign_domain(self):
         reply = self.client.post('/auth/register/',
@@ -494,7 +492,7 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('domain' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
 
     def test_registration_reuse_email(self):
         reply = self.client.post('/auth/register/',
@@ -503,4 +501,4 @@ class RegistrationApiTestCase(TestCase):
         self.assertEqual(reply.status_code, 400)
         self.assertTrue('errors' in reply.json())
         self.assertTrue('email' in reply.json()['errors'])
-        self.assertEqual(ToolshedUser.objects.all().count(), 2)
+        self.assertEqual(ToolshedUser.objects.all().count(), 3)
