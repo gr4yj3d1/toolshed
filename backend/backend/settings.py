@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'authentication',
     'hostadmin',
+    'files',
     'toolshed',
 ]
 
