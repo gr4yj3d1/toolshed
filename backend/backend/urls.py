@@ -35,5 +35,6 @@ urlpatterns = [
     path('api/', include('toolshed.api.friend')),
     path('api/', include('toolshed.api.inventory')),
     path('api/', include('toolshed.api.info')),
+    path('api/', include('toolshed.api.files')),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
 ]

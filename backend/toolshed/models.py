@@ -1,8 +1,10 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django_softdelete.models import SoftDeleteModel
+from rest_framework.exceptions import ValidationError
 
 from authentication.models import ToolshedUser, KnownIdentity
+from files.models import File
 
 
 class Category(SoftDeleteModel):
@@ -28,7 +30,7 @@ class Property(models.Model):
     unit_name_plural = models.CharField(max_length=255, null=True, blank=True)
     base2_prefix = models.BooleanField(default=False)
     dimensions = models.IntegerField(null=False, blank=False, default=1, validators=[MinValueValidator(1)])
-    origin = models.CharField(max_length=255)
+    origin = models.CharField(max_length=255, null=False, blank=False)
 
     class Meta:
         verbose_name_plural = 'properties'
@@ -41,7 +43,7 @@ class Tag(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name='tags')
-    origin = models.CharField(max_length=255)
+    origin = models.CharField(max_length=255, null=False, blank=False)
 
     def __str__(self):
         return self.name
@@ -49,16 +51,21 @@ class Tag(models.Model):
 
 class InventoryItem(SoftDeleteModel):
     published = models.BooleanField(default=False)
-    name = models.CharField(max_length=255)
-    description = models.TextField()
+    name = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True,
                                  related_name='inventory_items')
-    availability_policy = models.CharField(max_length=255)
+    availability_policy = models.CharField(max_length=255, default="private")
     owned_quantity = models.IntegerField(default=1, validators=[MinValueValidator(0)])
     owner = models.ForeignKey(ToolshedUser, on_delete=models.CASCADE, related_name='inventory_items')
     created_at = models.DateTimeField(auto_now_add=True)
-    tags = models.ManyToManyField('Tag', through='ItemTag', related_name='inventory_items')
-    properties = models.ManyToManyField('Property', through='ItemProperty')
+    tags = models.ManyToManyField(Tag, through='ItemTag', related_name='inventory_items')
+    properties = models.ManyToManyField(Property, through='ItemProperty')
+    files = models.ManyToManyField(File, related_name='connected_items')
+
+    def clean(self):
+        if (self.name is None or self.name == "") and self.files.count() == 0:
+            raise ValidationError("Name or at least one file must be set")
 
 
 class ItemProperty(models.Model):

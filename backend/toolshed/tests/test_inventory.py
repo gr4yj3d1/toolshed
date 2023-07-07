@@ -1,11 +1,12 @@
 from authentication.tests import SignatureAuthClient, UserTestMixin, ToolshedTestCase
+from files.tests import FilesTestMixin
 from toolshed.models import InventoryItem, Category
 from toolshed.tests import InventoryTestMixin, CategoryTestMixin, TagTestMixin, PropertyTestMixin
 
 client = SignatureAuthClient()
 
 
-class InventoryTestCase(UserTestMixin, InventoryTestMixin, ToolshedTestCase):
+class InventoryApiTestCase(UserTestMixin, InventoryTestMixin, ToolshedTestCase):
 
     def setUp(self):
         super().setUp()
@@ -76,6 +77,15 @@ class InventoryTestCase(UserTestMixin, InventoryTestMixin, ToolshedTestCase):
         self.assertEqual(item.owned_quantity, 1)
         self.assertEqual([t for t in item.tags.all()], [])
         self.assertEqual([p for p in item.properties.all()], [])
+
+    def test_post_new_item_empty(self):
+        reply = client.post('/api/inventory_items/', self.f['local_user1'], {
+            'availability_policy': 'friends',
+            'owned_quantity': 1,
+            'image': '',
+        })
+        self.assertEqual(reply.status_code, 400)
+        self.assertEqual(InventoryItem.objects.count(), 2)
 
     def test_post_new_item3(self):
         reply = client.post('/api/inventory_items/', self.f['local_user1'], {
@@ -202,3 +212,84 @@ class InventoryTestCase(UserTestMixin, InventoryTestMixin, ToolshedTestCase):
         reply = client.get('/api/search/?query=test', self.f['ext_user1'])
         self.assertEqual(reply.status_code, 200)
         self.assertEqual(len(reply.json()), 0)
+
+
+class TestInventoryItemWithFileApiTestCase(UserTestMixin, FilesTestMixin, InventoryTestMixin, ToolshedTestCase):
+    def setUp(self):
+        super().setUp()
+        self.prepare_users()
+        self.prepare_categories()
+        self.prepare_tags()
+        self.prepare_properties()
+        self.prepare_files()
+        self.prepare_inventory()
+
+    def test_post_item_with_file_id(self):
+        reply = client.post('/api/inventory_items/', self.f['local_user1'], {
+            'name': 'test4',
+            'description': 'test',
+            'category': 'cat1',
+            'owned_quantity': 1,
+            'tags': ['tag1', 'tag2'],
+            'properties': [{'name': 'prop1', 'value': 'value1'}, {'name': 'prop2', 'value': 'value2'}],
+            'files': [self.f['test_file1'].id]
+        })
+        self.assertEqual(reply.status_code, 201)
+        self.assertEqual(InventoryItem.objects.count(), 3)
+        item = InventoryItem.objects.get(id=3)
+        self.assertEqual(item.availability_policy, 'private')
+        self.assertEqual(item.category, Category.objects.get(name='cat1'))
+        self.assertEqual(item.name, 'test4')
+        self.assertEqual(item.description, 'test')
+        self.assertEqual(item.owned_quantity, 1)
+        self.assertEqual([t for t in item.tags.all()], [self.f['tag1'], self.f['tag2']])
+        self.assertEqual([p for p in item.properties.all()], [self.f['prop1'], self.f['prop2']])
+        self.assertEqual([p.value for p in item.itemproperty_set.all()], ['value1', 'value2'])
+        self.assertEqual([f for f in item.files.all()], [self.f['test_file1']])
+
+    def test_post_item_with_encoded_file(self):
+        reply = client.post('/api/inventory_items/', self.f['local_user1'], {
+            'name': 'test4',
+            'description': 'test',
+            'category': 'cat1',
+            'owned_quantity': 1,
+            'tags': ['tag1', 'tag2'],
+            'properties': [{'name': 'prop1', 'value': 'value1'}, {'name': 'prop2', 'value': 'value2'}],
+            'files': [{'data': self.f['encoded_content3'], 'mime_type': 'text/plain'}]
+        })
+        self.assertEqual(reply.status_code, 201)
+        self.assertEqual(InventoryItem.objects.count(), 3)
+        item = InventoryItem.objects.get(id=3)
+        self.assertEqual(item.availability_policy, 'private')
+        self.assertEqual(item.category, Category.objects.get(name='cat1'))
+        self.assertEqual(item.name, 'test4')
+        self.assertEqual(item.description, 'test')
+        self.assertEqual(item.owned_quantity, 1)
+        self.assertEqual([t for t in item.tags.all()], [self.f['tag1'], self.f['tag2']])
+        self.assertEqual([p for p in item.properties.all()], [self.f['prop1'], self.f['prop2']])
+        self.assertEqual([p.value for p in item.itemproperty_set.all()], ['value1', 'value2'])
+        self.assertEqual([f for f in item.files.all()], [self.f['test_file3']])
+
+    def test_post_item_with_file_id_fail(self):
+        reply = client.post('/api/inventory_items/', self.f['local_user1'], {
+            'name': 'test4',
+            'description': 'test',
+            'category': 'cat1',
+            'owned_quantity': 1,
+            'tags': ['tag1', 'tag2'],
+            'properties': [{'name': 'prop1', 'value': 'value1'}, {'name': 'prop2', 'value': 'value2'}],
+            'files': [99999]
+        })
+        self.assertEqual(reply.status_code, 400)
+
+    def test_post_item_with_encoded_file_fail(self):
+        reply = client.post('/api/inventory_items/', self.f['local_user1'], {
+            'name': 'test4',
+            'description': 'test',
+            'category': 'cat1',
+            'owned_quantity': 1,
+            'tags': ['tag1', 'tag2'],
+            'properties': [{'name': 'prop1', 'value': 'value1'}, {'name': 'prop2', 'value': 'value2'}],
+            'files': [{'data': self.f['encoded_content3']}]
+        })
+        self.assertEqual(reply.status_code, 400)

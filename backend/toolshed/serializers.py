@@ -1,5 +1,9 @@
 from rest_framework import serializers
+
 from authentication.models import KnownIdentity, ToolshedUser
+from authentication.serializers import OwnerSerializer
+from files.models import File
+from files.serializers import FileSerializer
 from toolshed.models import Category, Property, ItemProperty, InventoryItem, Tag
 
 
@@ -34,15 +38,6 @@ class CategorySerializer(serializers.ModelSerializer):
         return Category.objects.get(name=data.split("/")[-1])
 
 
-class InventoryItemOwnerSerializer(serializers.ReadOnlyField):
-    class Meta:
-        model = ToolshedUser
-        fields = '__all__'
-
-    def to_representation(self, value):
-        return value.username + '@' + value.domain
-
-
 class ItemPropertySerializer(serializers.ModelSerializer):
     property = PropertySerializer(read_only=True)
 
@@ -60,7 +55,7 @@ class ItemPropertySerializer(serializers.ModelSerializer):
 
 
 class InventoryItemSerializer(serializers.ModelSerializer):
-    owner = InventoryItemOwnerSerializer(read_only=True)
+    owner = OwnerSerializer(read_only=True)
     tags = serializers.SlugRelatedField(many=True, required=False, queryset=Tag.objects.all(), slug_field='name')
     properties = ItemPropertySerializer(many=True, required=False, source='itemproperty_set')
     category = CategorySerializer(required=False, allow_null=True)
@@ -70,14 +65,34 @@ class InventoryItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'owner', 'category', 'availability_policy', 'owned_quantity', 'owner',
                   'tags', 'properties']
 
+    def to_internal_value(self, data):
+        files = data.pop('files', [])
+        ret = super().to_internal_value(data)
+        ret['files'] = files
+        return ret
+
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
         props = validated_data.pop('itemproperty_set', [])
+        files = validated_data.pop('files', [])
         item = InventoryItem.objects.create(**validated_data)
         for tag in tags:
             item.tags.add(tag, through_defaults={})
         for prop in props:
             ItemProperty.objects.create(inventory_item=item, property=prop['property'], value=prop['value'])
+        for file in files:
+            if type(file) == dict:
+                file_serializer = FileSerializer(data=file)
+                if file_serializer.is_valid():
+                    file_serializer.save()
+                    item.files.add(file_serializer.instance)
+                else:
+                    raise serializers.ValidationError(file_serializer.errors)
+            elif type(file) == int:
+                if File.objects.filter(id=file).exists():
+                    item.files.add(File.objects.get(id=file))
+                else:
+                    raise serializers.ValidationError("File with id {} does not exist".format(file))
         item.save()
         return item
 

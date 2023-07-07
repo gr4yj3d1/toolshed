@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.urls import path
 from rest_framework import routers, viewsets
 from rest_framework.decorators import authentication_classes, api_view, permission_classes
@@ -35,11 +36,13 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
         return InventoryItem.objects.filter(owner=self.request.user.user.get())
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user.user.get())
+        with transaction.atomic():
+            serializer.save(owner=self.request.user.user.get()).clean()
 
     def perform_update(self, serializer):
-        if serializer.instance.owner == self.request.user.user.get():
-            serializer.save()
+        with transaction.atomic():
+            if serializer.instance.owner == self.request.user.user.get():
+                serializer.save().clean()
 
     def perform_destroy(self, instance):
         if instance.owner == self.request.user.user.get():
