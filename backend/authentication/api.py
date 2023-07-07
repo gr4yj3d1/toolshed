@@ -93,9 +93,7 @@ def registerUser(request):
 
         Domain.objects.get(name=domain, open_registration=True)
 
-        user = ToolshedUser.objects.create_user(username, email, '', domain=domain)
-        user.set_password(password)
-        user.save()
+        user = ToolshedUser.objects.create_user(username, email, password, domain=domain)
         return Response({'username': user.username, 'domain': user.domain})
     except Domain.DoesNotExist:
         return Response({'errors': {'domain': 'Domain does not exist or is not open for registration'}}, status=400)

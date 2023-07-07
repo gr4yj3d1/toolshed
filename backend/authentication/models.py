@@ -52,26 +52,27 @@ class ToolshedUserManager(auth.models.BaseUserManager):
         extra_fields['private_key'] = private_key.encode(encoder=HexEncoder).decode('utf-8')
         try:
             with transaction.atomic():
-                extra_fields['public_identity'] = identity = KnownIdentity.objects.create(
-                    username=username, domain=domain, public_key=public_key.encode(encoder=HexEncoder).decode('utf-8'))
+                extra_fields['public_identity'] = identity = KnownIdentity.objects.get_or_create(
+                    username=username, domain=domain, public_key=public_key.encode(encoder=HexEncoder).decode('utf-8'))[0]
+                try:
+                    with transaction.atomic():
+                        user = super().create(username=username, email=email, password=password, domain=domain,
+                                              **extra_fields)
+                        user.set_password(password)
+                        user.save()
+                except IntegrityError:
+                    identity.delete()
+                    raise ValueError('Username or email already exists')
+                else:
+                    return user
         except IntegrityError:
             raise ValueError('Username already exists')
-        else:
-            try:
-                with transaction.atomic():
-                    user = super().create(username=username, email=email, password=password, domain=domain,
-                                          **extra_fields)
-                    user.save()
-            except IntegrityError:
-                identity.delete()
-                raise ValueError('Username or email already exists')
-            else:
-                return user
 
     def create_superuser(self, username, email, password, **extra_fields):
-        user = self.create_user(username=username, email=email, password=password, **extra_fields)
+        user = self.create_user(username, email, password, **extra_fields)
         user.is_staff = True
         user.is_superuser = True
+        user.save()
         return user
 
 

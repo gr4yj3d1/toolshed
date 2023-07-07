@@ -6,7 +6,6 @@ from nacl.signing import SigningKey
 
 from authentication.models import ToolshedUser, KnownIdentity
 from authentication.tests import UserTestMixin, SignatureAuthClient, DummyExternalUser, ToolshedTestCase
-from hostadmin.models import Domain
 
 
 class AuthorizationTestCase(ToolshedTestCase):
@@ -168,18 +167,18 @@ class UserModelTestCase(UserTestMixin, ToolshedTestCase):
 
     def test_create_existing_user(self):
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser1', 'test3@abc.de', '', domain='example.com')
+            ToolshedUser.objects.create_user('testuser1', 'test3@abc.de', 'testpassword', domain='example.com')
 
     def test_create_existing_user2(self):
         key = SigningKey.generate()
         KnownIdentity.objects.create(username="testuser3", domain='localhost',
                                      public_key=key.verify_key.encode(encoder=HexEncoder).decode('utf-8'))
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser3', 'test3@abc.de', '', domain='localhost')
+            ToolshedUser.objects.create_user('testuser3', 'test3@abc.de', 'testpassword', domain='localhost')
 
     def test_create_reuse_email(self):
         with self.assertRaises(ValueError):
-            ToolshedUser.objects.create_user('testuser3', 'test1@abc.de', '', domain='example.com')
+            ToolshedUser.objects.create_user('testuser3', 'test1@abc.de', 'testpassword', domain='example.com')
 
     def test_create_user_invalid_private_key(self):
         with self.assertRaises(TypeError):

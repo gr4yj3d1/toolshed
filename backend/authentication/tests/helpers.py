@@ -35,42 +35,39 @@ class DummyExternalUser:
 class SignatureAuthClient:
     base = Client(SERVER_NAME='testserver')
 
-    def get(self, target, user, **kwargs):
+    def __init__(self, **kwargs):
+        self.user = kwargs.get('user', None)
+        self.header_prefix = kwargs.get('header_prefix', 'Signature ')
+        self.bad_signature = kwargs.get('bad_signature', False)
+
+    def build_header(self, method, target, user, payload=None):
+        user = user if user is not None else self.user
         if user is None:
             raise ValueError("User must not be None")
-        signature = user.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(user) + ':' + signature}
+        payload_json = json.dumps(payload, separators=(',', ':')) if payload is not None else ''
+        signature = user.sign(
+            "http://testserver" + target + (payload_json if not self.bad_signature else payload_json[:-2] + "ff"))
+        return {'HTTP_AUTHORIZATION': self.header_prefix + str(user) + ':' + signature,
+                'content_type': 'application/json'}, payload_json
+
+    def get(self, target, user=None, **kwargs):
+        header, payload = self.build_header('GET', target, user)
         return self.base.get(target, **header, **kwargs)
 
-    def post(self, target, user, data, **kwargs):
-        if user is None:
-            raise ValueError("User must not be None")
-        json_data = json.dumps(data, separators=(',', ':'))
-        signature = user.sign("http://testserver" + target + json_data)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(user) + ':' + signature}
-        return self.base.post(target, json_data, **header, content_type='application/json', **kwargs)
+    def post(self, target, user=None, data=None, **kwargs):
+        header, payload = self.build_header('POST', target, user, data)
+        return self.base.post(target, payload, **header, **kwargs)
 
-    def put(self, target, user, data, **kwargs):
-        if user is None:
-            raise ValueError("User must not be None")
-        json_data = json.dumps(data, separators=(',', ':'))
-        signature = user.sign("http://testserver" + target + json_data)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(user) + ':' + signature}
-        return self.base.put(target, json_data, **header, content_type='application/json', **kwargs)
+    def put(self, target, user=None, data=None, **kwargs):
+        header, payload = self.build_header('PUT', target, user, data)
+        return self.base.put(target, payload, **header, **kwargs)
 
-    def patch(self, target, user, data, **kwargs):
-        if user is None:
-            raise ValueError("User must not be None")
-        json_data = json.dumps(data, separators=(',', ':'))
-        signature = user.sign("http://testserver" + target + json_data)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(user) + ':' + signature}
-        return self.base.patch(target, json_data, **header, content_type='application/json', **kwargs)
+    def patch(self, target, user=None, data=None, **kwargs):
+        header, payload = self.build_header('PATCH', target, user, data)
+        return self.base.patch(target, payload, **header, **kwargs)
 
-    def delete(self, target, user, **kwargs):
-        if user is None:
-            raise ValueError("User must not be None")
-        signature = user.sign("http://testserver" + target)
-        header = {'HTTP_AUTHORIZATION': 'Signature ' + str(user) + ':' + signature}
+    def delete(self, target, user=None, **kwargs):
+        header, payload = self.build_header('DELETE', target, user)
         return self.base.delete(target, **header, **kwargs)
 
 
@@ -81,18 +78,11 @@ class ToolshedTestCase(TestCase):
 class UserTestMixin:
 
     def prepare_users(self):
-        self.f['admin'] = ToolshedUser.objects.create_superuser('testadmin', 'testadmin@localhost', '')
-        self.f['admin'].set_password('testpassword')
-        self.f['admin'].save()
+        self.f['admin'] = ToolshedUser.objects.create_superuser('testadmin', 'testadmin@localhost', 'testpassword')
         self.f['example_com'] = Domain.objects.create(name='example.com', owner=self.f['admin'], open_registration=True)
-        self.f['example_com'].save()
-        self.f['local_user1'] = ToolshedUser.objects.create_user('testuser1', 'test1@abc.de', '',
+        self.f['local_user1'] = ToolshedUser.objects.create_user('testuser1', 'test1@abc.de', 'testpassword2',
                                                                  domain=self.f['example_com'].name)
-        self.f['local_user1'].set_password('testpassword2')
-        self.f['local_user1'].save()
-        self.f['local_user2'] = ToolshedUser.objects.create_user('testuser2', 'test2@abc.de', '',
+        self.f['local_user2'] = ToolshedUser.objects.create_user('testuser2', 'test2@abc.de', 'testpassword3',
                                                                  domain=self.f['example_com'].name)
-        self.f['local_user2'].set_password('testpassword3')
-        self.f['local_user2'].save()
         self.f['ext_user1'] = DummyExternalUser('extuser1', 'external.org')
         self.f['ext_user2'] = DummyExternalUser('extuser2', 'external.org')
