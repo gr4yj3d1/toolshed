@@ -13,8 +13,6 @@ import os
 import dotenv
 from pathlib import Path
 
-from django.contrib import staticfiles
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,10 +27,9 @@ if SECRET_KEY is None:
 
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-if DEBUG:
-    print('DEBUG mode is enabled')
-
 # Application definition
+
+TOOLSHED_VERSION = "0.0.0-dev.0"
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -84,6 +81,9 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 CSRF_TRUSTED_ORIGINS = ['https://' + host for host in ALLOWED_HOSTS]
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -177,4 +177,5 @@ STORAGES = {
     },
 }
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 128  # 128 MB
 TEST_RUNNER = 'backend.test_runner.FastTestRunner'
