@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+import json
 import os
 import sys
 from argparse import ArgumentParser
 
 import dotenv
+from django.db import transaction, IntegrityError
 
 
 def yesno(prompt, default=False):
@@ -78,10 +80,68 @@ def configure():
 
     call_command('collectstatic', '--no-input')
 
+    if yesno("Do you want to import all categories, properties and tags contained in this repository?", default=True):
+        from hostadmin.serializers import CategorySerializer, PropertySerializer, TagSerializer
+        from hostadmin.models import ImportedIdentifierSets
+        if not os.path.exists('shared_data'):
+            os.mkdir('shared_data')
+        files = os.listdir('shared_data')
+        idsets = {}
+        for file in files:
+            if file.endswith('.json'):
+                name = "git:" + file[:-5]
+                with open('shared_data/' + file, 'r') as f:
+                    try:
+                        idset = json.load(f)
+                        idsets[name] = idset
+                    except json.decoder.JSONDecodeError:
+                        print('Error: invalid JSON in file {}'.format(file))
+        imported_sets = ImportedIdentifierSets.objects.all()
+        for name in [name for name in idsets.keys() if imported_sets.filter(name=name).exists()]:
+            print('Identifier set {} already imported, skipping'.format(name))
+        queue = [name for name in idsets.keys() if not imported_sets.filter(name=name).exists()]
+        while queue:
+            name = queue.pop(0)
+            print('Importing {}...'.format(name))
+            idset = idsets[name]
+            if 'depends' in idset:
+                unmet_deps = [dep for dep in idset['depends'] if not imported_sets.filter(name=dep).exists()]
+                if unmet_deps:
+                    if all([dep in idsets.keys() for dep in unmet_deps]):
+                        print('Not all dependencies for {} are imported, postponing'.format(name))
+                        queue.append(name)
+                        continue
+                    else:
+                        print('unknown dependencies for {}: {}'.format(name, unmet_deps))
+                        continue
+            with transaction.atomic():
+                try:
+                    if 'categories' in idset:
+                        for category in idset['categories']:
+                            serializer = CategorySerializer(data=category)
+                            if serializer.is_valid():
+                                serializer.save(origin=name)
+                    if 'properties' in idset:
+                        for property in idset['properties']:
+                            serializer = PropertySerializer(data=property)
+                            if serializer.is_valid():
+                                serializer.save(origin=name)
+                    if 'tags' in idset:
+                        for tag in idset['tags']:
+                            serializer = TagSerializer(data=tag)
+                            if serializer.is_valid():
+                                serializer.save(origin=name)
+                    imported_sets.create(name=name)
+                except IntegrityError:
+                    print('Error: integrity error while importing {}\n\tmight be cause by name conflicts with existing'
+                          ' categories, properties or tags'.format(name))
+                    continue
+
 
 def reset():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
     import django
+    import shutil
 
     django.setup()
 
@@ -90,16 +150,19 @@ def reset():
     except FileNotFoundError:
         pass
 
+    for file in os.listdir('userfiles'):
+        try:
+            shutil.rmtree('userfiles/' + file)
+        except FileNotFoundError:
+            pass
+
     os.system("git clean -f */migrations")
 
     from django.core.management import call_command
 
-    apps = ['authentication', 'authtoken', 'sessions', 'hostadmin', 'toolshed', 'admin']
+    apps = ['authentication', 'authtoken', 'sessions', 'hostadmin', 'files', 'toolshed', 'admin']
     for app in apps:
         call_command('makemigrations', app)
-
-    for app in apps:
-        call_command('migrate', app)
 
 
 def testdata():
