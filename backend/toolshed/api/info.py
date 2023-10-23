@@ -7,6 +7,14 @@ from hostadmin.models import Domain
 from authentication.signature_auth import SignatureAuthentication
 from toolshed.models import Tag, Property, Category
 from toolshed.serializers import CategorySerializer, PropertySerializer
+from backend.settings import TOOLSHED_VERSION
+
+
+@api_view(['GET'])
+@permission_classes([])
+@authentication_classes([])
+def get_version(request, format=None):  # /version/
+    return Response({'version': TOOLSHED_VERSION})
 
 
 @api_view(['GET'])
@@ -53,12 +61,13 @@ def list_availability_policies(request, format=None):  # /availability_policies/
 def combined_info(request, format=None):  # /info/
     tags = [tag.name for tag in Tag.objects.all()]
     properties = [property.name for property in Property.objects.all()]
-    categories = [category.name for category in Category.objects.all()]
+    categories = [str(category) for category in Category.objects.all()]
     policies = ['private', 'friends', 'internal', 'public']
     return Response({'tags': tags, 'properties': properties, 'policies': policies, 'categories': categories})
 
 
 urlpatterns = [
+    path('version/', get_version, name='version'),
     path('availability_policies/', list_availability_policies, name='availability_policies'),
     path('properties/', list_properties, name='propertylist'),
     path('categories/', list_categories, name='categorylist'),

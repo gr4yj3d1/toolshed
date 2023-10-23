@@ -1,5 +1,4 @@
 from authentication.tests import SignatureAuthClient, UserTestMixin, ToolshedTestCase
-from toolshed.models import Category
 from toolshed.tests import CategoryTestMixin
 
 client = SignatureAuthClient()
