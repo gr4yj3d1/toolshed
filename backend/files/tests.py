@@ -2,7 +2,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import DefaultStorage
 from django.db import IntegrityError, transaction
 from django.test import Client
-from authentication.tests import SignatureAuthClient, ToolshedTestCase
+from authentication.tests import SignatureAuthClient, ToolshedTestCase, UserTestMixin
 from nacl.hash import sha256
 from nacl.encoding import HexEncoder
 import base64
@@ -95,7 +95,7 @@ class FilesTestCase(FilesTestMixin, ToolshedTestCase):
         self.assertTrue(created)
         self.assertEqual(file.file.read(), self.f['test_content4'])
         self.assertEqual(file.file.name,
-                            f"{self.f['hash4'][:2]}/{self.f['hash4'][2:4]}/{self.f['hash4'][4:6]}/{self.f['hash4'][6:]}")
+                         f"{self.f['hash4'][:2]}/{self.f['hash4'][2:4]}/{self.f['hash4'][4:6]}/{self.f['hash4'][6:]}")
 
     def test_file_upload_get_or_create_fail(self):
         with transaction.atomic():
@@ -103,3 +103,31 @@ class FilesTestCase(FilesTestMixin, ToolshedTestCase):
                 File.objects.get_or_create(hash=self.f['hash3'])
         self.assertEqual(File.objects.count(), 3)
         self.assertEqual(countdir(DefaultStorage(), ''), 3)
+
+
+class MediaUrlTestCase(FilesTestMixin, UserTestMixin, ToolshedTestCase):
+    def setUp(self):
+        super().setUp()
+        self.prepare_files()
+        self.prepare_users()
+
+    def test_file_url(self):
+        reply = client.get(
+            f"/media/{self.f['hash1'][:2]}/{self.f['hash1'][2:4]}/{self.f['hash1'][4:6]}/{self.f['hash1'][6:]}",
+            self.f['local_user1'])
+        self.assertEqual(reply.status_code, 200)
+        self.assertEqual(reply.headers['X-Accel-Redirect'],
+                         f"/redirect_media/{self.f['hash1'][:2]}/{self.f['hash1'][2:4]}/{self.f['hash1'][4:6]}/{self.f['hash1'][6:]}")
+        reply = client.get(
+            f"/media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}",
+            self.f['local_user1'])
+        self.assertEqual(reply.status_code, 200)
+        self.assertEqual(reply.headers['X-Accel-Redirect'],
+                         f"/redirect_media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}")
+
+    def test_file_url_fail(self):
+        reply = client.get('/media/{}/'.format('nonexistent'), self.f['local_user1'])
+        self.assertEqual(reply.status_code, 404)
+        self.assertTrue('X-Accel-Redirect' not in reply.headers)
+
+
