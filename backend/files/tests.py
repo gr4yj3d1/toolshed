@@ -118,12 +118,14 @@ class MediaUrlTestCase(FilesTestMixin, UserTestMixin, ToolshedTestCase):
         self.assertEqual(reply.status_code, 200)
         self.assertEqual(reply.headers['X-Accel-Redirect'],
                          f"/redirect_media/{self.f['hash1'][:2]}/{self.f['hash1'][2:4]}/{self.f['hash1'][4:6]}/{self.f['hash1'][6:]}")
+        self.assertEqual(reply.content_type, self.f['test_file1'].mime_type)
         reply = client.get(
             f"/media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}",
             self.f['local_user1'])
         self.assertEqual(reply.status_code, 200)
         self.assertEqual(reply.headers['X-Accel-Redirect'],
                          f"/redirect_media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}")
+        self.assertEqual(reply.content_type, self.f['test_file2'].mime_type)
 
     def test_file_url_fail(self):
         reply = client.get('/media/{}/'.format('nonexistent'), self.f['local_user1'])
