@@ -18,14 +18,16 @@ from django.urls import path, include
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
+openapi_info = openapi.Info(
+    title="Toolshed API",
+    default_version='v1',
+    description="API for all things …",
+)
+
 schema_view = get_schema_view(
-    openapi.Info(
-        title="Toolshed API",
-        default_version='v1',
-        description="API for all things …",
-    ),
+    openapi_info,
     public=True,
-    permission_classes=[]
+    permission_classes=[],
 )
 
 urlpatterns = [

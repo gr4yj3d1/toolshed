@@ -23,6 +23,7 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['name', 'description', 'parent', 'origin']
         read_only_fields = ['origin']
+        ref_name = 'HostAdminCategory'
 
 
 class PropertySerializer(serializers.ModelSerializer):
@@ -33,6 +34,7 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = ['name', 'description', 'category', 'unit_symbol', 'unit_name', 'unit_name_plural', 'base2_prefix',
                   'dimensions', 'origin']
         read_only_fields = ['origin']
+        ref_name = 'HostAdminProperty'
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -42,3 +44,4 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ['name', 'description', 'category', 'origin']
         read_only_fields = ['origin']
+        ref_name = 'HostAdminTag'

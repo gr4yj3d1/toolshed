@@ -63,6 +63,7 @@ SWAGGER_SETTINGS = {
     },
     'USE_SESSION_AUTH': False,
     'JSON_EDITOR': True,
+    'DEFAULT_INFO': 'backend.urls.openapi_info',
 }
 
 MIDDLEWARE = [
