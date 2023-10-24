@@ -1,4 +1,5 @@
 from django.urls import path
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -6,6 +7,8 @@ from rest_framework.response import Response
 from files.models import File
 
 
+# TODO check file permissions here
+@swagger_auto_schema(method='GET', auto_schema=None)
 @api_view(['GET'])
 def media_urls(request, id, format=None):
     try:
