@@ -78,6 +78,12 @@ class FriendApiTestCase(UserTestMixin, ToolshedTestCase):
         self.assertEqual(len(reply.json()), 1)
         self.assertEqual(reply.json()[0]['username'], str(self.f['local_user1']))
 
+    def test_friend_delete(self):
+        reply = client.delete('/api/friends/{}/'.format(self.f['local_user2'].public_identity.id),
+                              self.f['local_user1'])
+        self.assertEqual(reply.status_code, 204)
+        self.assertEqual(self.f['local_user1'].friends.count(), 1)
+
 
 # what ~should~ happen:
 # 1. user x@A sends a friend request to user y@B
@@ -100,10 +106,11 @@ class FriendRequestListTestCase(UserTestMixin, ToolshedTestCase):
     def setUp(self):
         super().setUp()
         self.prepare_users()
-        FriendRequestIncoming.objects.create(
+        self.friendrequest1 = FriendRequestIncoming.objects.create(
             befriender_username=self.f['ext_user2'].username, befriender_domain=self.f['ext_user2'].domain,
             befriender_public_key=self.f['ext_user2'].public_key(), befriendee_user=self.f['local_user1'],
-            secret='secret1').save()
+            secret='secret1')
+        self.friendrequest1.save()
 
     def test_friend_request_withouth_auth(self):
         reply = Client().get('/api/friendrequests/')
@@ -120,6 +127,17 @@ class FriendRequestListTestCase(UserTestMixin, ToolshedTestCase):
         self.assertEqual(len(reply.json()), 1)
         self.assertEqual(reply.json()[0]['befriender'], str(self.f['ext_user2']))
         self.assertEqual(reply.json()[0]['befriender_public_key'], self.f['ext_user2'].public_key())
+
+    def test_delete_friend_request(self):
+        reply = client.delete('/api/friendrequests/{}/'.format(self.friendrequest1.id),
+                                self.f['local_user1'])
+        self.assertEqual(reply.status_code, 204)
+        self.assertEqual(FriendRequestIncoming.objects.count(), 0)
+
+    def test_delete_friend_request_not_found(self):
+        reply = client.delete('/api/friendrequests/999/', self.f['local_user1'])
+        self.assertEqual(reply.status_code, 404)
+        self.assertEqual(FriendRequestIncoming.objects.count(), 1)
 
 
 class FriendRequestIncomingTestCase(UserTestMixin, ToolshedTestCase):

@@ -5,7 +5,7 @@ from rest_framework.decorators import authentication_classes, api_view, permissi
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from authentication.models import ToolshedUser
+from authentication.models import ToolshedUser, KnownIdentity
 from authentication.signature_auth import SignatureAuthentication
 from toolshed.models import InventoryItem
 from toolshed.serializers import InventoryItemSerializer
@@ -33,7 +33,9 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return InventoryItem.objects.filter(owner=self.request.user.user.get())
+        if type(self.request.user) == KnownIdentity and self.request.user.user.exists():
+            return InventoryItem.objects.filter(owner=self.request.user.user.get())
+        return InventoryItem.objects.none()
 
     def perform_create(self, serializer):
         with transaction.atomic():

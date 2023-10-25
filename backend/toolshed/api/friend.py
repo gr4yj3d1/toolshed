@@ -2,7 +2,7 @@ import secrets
 
 from django.urls import path
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -11,7 +11,7 @@ from rest_framework.viewsets import ViewSetMixin
 
 from authentication.models import KnownIdentity, FriendRequestIncoming, FriendRequestOutgoing, ToolshedUser
 from authentication.signature_auth import verify_incoming_friend_request, split_userhandle_or_throw, \
-    authenticate_request_against_local_users, SignatureAuthentication
+    authenticate_request_against_local_users, SignatureAuthenticationLocal, SignatureAuthentication
 from toolshed.serializers import FriendSerializer, FriendRequestSerializer
 
 
@@ -120,7 +120,30 @@ class FriendsRequests(APIView, ViewSetMixin):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['DELETE'])
+@authentication_classes([SignatureAuthenticationLocal])
+@permission_classes([IsAuthenticated])
+def dropFriend(request, pk, format=None):  # /api/friends/<id>/
+    user = request.user
+    friend = get_object_or_404(user.friends, pk=pk)
+    user.friends.remove(friend)
+    user.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['DELETE'])
+@authentication_classes([SignatureAuthenticationLocal])
+@permission_classes([IsAuthenticated])
+def deleteFriendRequest(request, pk, format=None):  # /api/friendrequests/<id>/
+    user = request.user
+    get_object_or_404(user.friend_requests_incoming, pk=pk).delete()
+    user.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 urlpatterns = [
     path('friends/', Friends.as_view(), name='friends'),
+    path('friends/<int:pk>/', dropFriend),
     path('friendrequests/', FriendsRequests.as_view(), name='friendrequests'),
+    path('friendrequests/<int:pk>/', deleteFriendRequest),
 ]
