@@ -36,6 +36,15 @@ class CombinedApiTestCase(UserTestMixin, CategoryTestMixin, TagTestMixin, Proper
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), ['example.com'])
 
+    def test_policy_api_anonymous(self):
+        response = anonymous_client.get('/api/availability_policies/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_policy_api(self):
+        response = client.get('/api/availability_policies/', self.f['local_user1'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), ['private', 'friends', 'internal', 'public'])
+
     def test_combined_api_anonymous(self):
         response = anonymous_client.get('/api/info/')
         self.assertEqual(response.status_code, 403)
@@ -47,14 +56,6 @@ class CombinedApiTestCase(UserTestMixin, CategoryTestMixin, TagTestMixin, Proper
         self.assertEqual(response.json()['categories'],
                          ['cat1', 'cat2', 'cat3', 'cat1/subcat1', 'cat1/subcat2', 'cat1/subcat1/subcat3'])
         self.assertEqual(response.json()['tags'], ['tag1', 'tag2', 'tag3'])
-        self.assertEqual(response.json()['properties'], ['prop1', 'prop2', 'prop3'])
-
-    def test_policy_api_anonymous(self):
-        response = anonymous_client.get('/api/availability_policies/')
-        self.assertEqual(response.status_code, 403)
-
-    def test_policy_api(self):
-        response = client.get('/api/availability_policies/', self.f['local_user1'])
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), ['private', 'friends', 'internal', 'public'])
-
+        self.assertEqual([p['name'] for p in response.json()['properties']], ['prop1', 'prop2', 'prop3'])
+        self.assertEqual(response.json()['domains'], ['example.com'])
+        self.assertEqual(response.json()['policies'], ['private', 'friends', 'internal', 'public'])

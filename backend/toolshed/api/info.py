@@ -60,10 +60,12 @@ def list_availability_policies(request, format=None):  # /availability_policies/
 @authentication_classes([SignatureAuthentication])
 def combined_info(request, format=None):  # /info/
     tags = [tag.name for tag in Tag.objects.all()]
-    properties = [property.name for property in Property.objects.all()]
+    properties = PropertySerializer(Property.objects.all(), many=True).data
     categories = [str(category) for category in Category.objects.all()]
     policies = ['private', 'friends', 'internal', 'public']
-    return Response({'tags': tags, 'properties': properties, 'policies': policies, 'categories': categories})
+    domains = [domain.name for domain in Domain.objects.filter(open_registration=True)]
+    return Response(
+        {'tags': tags, 'properties': properties, 'policies': policies, 'categories': categories, 'domains': domains})
 
 
 urlpatterns = [
