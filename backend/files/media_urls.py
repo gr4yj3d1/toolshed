@@ -16,7 +16,8 @@ def media_urls(request, id, format=None):
         return Response(status=status.HTTP_200_OK,
                         content_type=file.mime_type,
                         headers={
-                            'X-Accel-Redirect': f'/redirect_media/{id}'
+                            'X-Accel-Redirect': f'/redirect_media/{id}',
+                            'Access-Control-Allow-Origin': '*',
                         })  # TODO Expires and Cache-Control
 
     except File.DoesNotExist:
