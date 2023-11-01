@@ -3,6 +3,7 @@ from django.core.files.storage import DefaultStorage
 from django.db import IntegrityError, transaction
 from django.test import Client
 from authentication.tests import SignatureAuthClient, ToolshedTestCase, UserTestMixin
+from toolshed.tests import InventoryTestMixin
 from nacl.hash import sha256
 from nacl.encoding import HexEncoder
 import base64
@@ -105,11 +106,19 @@ class FilesTestCase(FilesTestMixin, ToolshedTestCase):
         self.assertEqual(countdir(DefaultStorage(), ''), 3)
 
 
-class MediaUrlTestCase(FilesTestMixin, UserTestMixin, ToolshedTestCase):
+class MediaUrlTestCase(FilesTestMixin, UserTestMixin, InventoryTestMixin, ToolshedTestCase):
     def setUp(self):
         super().setUp()
         self.prepare_files()
         self.prepare_users()
+        self.prepare_categories()
+        self.prepare_tags()
+        self.prepare_properties()
+        self.prepare_inventory()
+        self.f['item1'].files.add(self.f['test_file1'])
+        self.f['item1'].files.add(self.f['test_file2'])
+        self.f['item2'].files.add(self.f['test_file1'])
+
 
     def test_file_url(self):
         reply = client.get(
@@ -126,10 +135,33 @@ class MediaUrlTestCase(FilesTestMixin, UserTestMixin, ToolshedTestCase):
         self.assertEqual(reply.headers['X-Accel-Redirect'],
                          f"/redirect_media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}")
         self.assertEqual(reply.headers['Content-Type'], self.f['test_file2'].mime_type)
+        reply = client.get(
+            f"/media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}",
+            self.f['local_user2'])
+        self.assertEqual(reply.status_code, 200)
+        self.assertEqual(reply.headers['X-Accel-Redirect'],
+                         f"/redirect_media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}")
+        self.assertEqual(reply.headers['Content-Type'], self.f['test_file2'].mime_type)
 
     def test_file_url_fail(self):
         reply = client.get('/media/{}/'.format('nonexistent'), self.f['local_user1'])
         self.assertEqual(reply.status_code, 404)
         self.assertTrue('X-Accel-Redirect' not in reply.headers)
 
+    def test_file_url_anonymous(self):
+        reply = anonymous_client.get(
+            f"/media/{self.f['hash1'][:2]}/{self.f['hash1'][2:4]}/{self.f['hash1'][4:6]}/{self.f['hash1'][6:]}")
+        self.assertEqual(reply.status_code, 403)
+        self.assertTrue('X-Accel-Redirect' not in reply.headers)
 
+    def test_file_url_wrong_user(self):
+        reply = client.get(
+            f"/media/{self.f['hash3'][:2]}/{self.f['hash3'][2:4]}/{self.f['hash3'][4:6]}/{self.f['hash3'][6:]}",
+            self.f['local_user1'])
+        self.assertEqual(reply.status_code, 404)
+        self.assertTrue('X-Accel-Redirect' not in reply.headers)
+        reply = client.get(
+            f"/media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}",
+            self.f['ext_user1'])
+        self.assertEqual(reply.status_code, 404)
+        self.assertTrue('X-Accel-Redirect' not in reply.headers)

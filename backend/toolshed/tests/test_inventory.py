@@ -1,7 +1,7 @@
 from authentication.tests import SignatureAuthClient, UserTestMixin, ToolshedTestCase
 from files.tests import FilesTestMixin
 from toolshed.models import InventoryItem, Category
-from toolshed.tests import InventoryTestMixin, CategoryTestMixin, TagTestMixin, PropertyTestMixin
+from toolshed.tests import InventoryTestMixin
 
 client = SignatureAuthClient()
 

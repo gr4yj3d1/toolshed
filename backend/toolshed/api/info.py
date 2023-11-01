@@ -64,8 +64,7 @@ def combined_info(request, format=None):  # /info/
     categories = [str(category) for category in Category.objects.all()]
     policies = ['private', 'friends', 'internal', 'public']
     domains = [domain.name for domain in Domain.objects.filter(open_registration=True)]
-    return Response(
-        {'tags': tags, 'properties': properties, 'policies': policies, 'categories': categories, 'domains': domains})
+    return Response({'tags': tags, 'properties': properties, 'availability_policies': policies, 'categories': categories, 'domains': domains})
 
 
 urlpatterns = [

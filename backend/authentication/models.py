@@ -25,6 +25,10 @@ class KnownIdentity(models.Model):
     def is_authenticated(self):
         return True
 
+    def friends_or_self(self):
+        return ToolshedUser.objects.filter(public_identity__friends=self) | ToolshedUser.objects.filter(
+            public_identity=self)
+
     def verify(self, message, signature):
         if len(signature) != 128 or type(signature) != str:
             raise TypeError('Signature must be 128 characters long and a string')
@@ -53,7 +57,8 @@ class ToolshedUserManager(auth.models.BaseUserManager):
         try:
             with transaction.atomic():
                 extra_fields['public_identity'] = identity = KnownIdentity.objects.get_or_create(
-                    username=username, domain=domain, public_key=public_key.encode(encoder=HexEncoder).decode('utf-8'))[0]
+                    username=username, domain=domain,
+                    public_key=public_key.encode(encoder=HexEncoder).decode('utf-8'))[0]
                 try:
                     with transaction.atomic():
                         user = super().create(username=username, email=email, password=password, domain=domain,
