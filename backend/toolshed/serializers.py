@@ -69,11 +69,12 @@ class InventoryItemSerializer(serializers.ModelSerializer):
     tags = serializers.SlugRelatedField(many=True, required=False, queryset=Tag.objects.all(), slug_field='name')
     properties = ItemPropertySerializer(many=True, required=False, source='itemproperty_set')
     category = CategorySerializer(required=False, allow_null=True)
+    files = FileSerializer(many=True, read_only=True)
 
     class Meta:
         model = InventoryItem
         fields = ['id', 'name', 'description', 'owner', 'category', 'availability_policy', 'owned_quantity', 'owner',
-                  'tags', 'properties']
+                  'tags', 'properties', 'files']
 
     def to_internal_value(self, data):
         files = data.pop('files', [])

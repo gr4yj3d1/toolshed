@@ -138,3 +138,21 @@ class FileApiTestCase(UserTestMixin, FilesTestMixin, InventoryTestMixin, Toolshe
         self.assertEqual(response.status_code, 403)
         self.assertEqual(File.objects.count(), 3)
         self.assertEqual(self.f['item1'].files.count(), 2)
+
+    def test_get_inventory(self):
+        reply = client.get('/api/inventory_items/', self.f['local_user1'])
+        self.assertEqual(reply.status_code, 200)
+        self.assertEqual(len(reply.json()), 2)
+        self.assertEqual(reply.json()[0]['name'], 'test1')
+        self.assertEqual(reply.json()[1]['name'], 'test2')
+        self.assertEqual(len(reply.json()[0]['files']), 2)
+        self.assertEqual(len(reply.json()[1]['files']), 1)
+        self.assertEqual(reply.json()[0]['files'][0]['name'],
+                         f"/media/{self.f['hash1'][:2]}/{self.f['hash1'][2:4]}/{self.f['hash1'][4:6]}/{self.f['hash1'][6:]}")
+        self.assertEqual(reply.json()[0]['files'][1]['name'],
+                            f"/media/{self.f['hash2'][:2]}/{self.f['hash2'][2:4]}/{self.f['hash2'][4:6]}/{self.f['hash2'][6:]}")
+        self.assertEqual(reply.json()[1]['files'][0]['name'],
+                            f"/media/{self.f['hash1'][:2]}/{self.f['hash1'][2:4]}/{self.f['hash1'][4:6]}/{self.f['hash1'][6:]}")
+        self.assertEqual(reply.json()[0]['files'][0]['mime_type'], 'text/plain')
+        self.assertEqual(reply.json()[0]['files'][1]['mime_type'], 'text/plain')
+        self.assertEqual(reply.json()[1]['files'][0]['mime_type'], 'text/plain')
